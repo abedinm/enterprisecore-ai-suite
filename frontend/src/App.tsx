@@ -8,6 +8,8 @@ import { RegisterPage } from './pages/auth/RegisterPage';
 import { DashboardPage } from './pages/dashboard/DashboardPage';
 import { FinancePage } from './pages/finance/FinancePage';
 import { HRPage } from './pages/hr/HRPage';
+import { ProjectsPage } from './pages/projects/ProjectsPage';
+import { InventoryPage } from './pages/inventory/InventoryPage';
 import { CodingPage } from './pages/coding/CodingPage';
 import { ModulePage } from './pages/ModulePage';
 import { SearchPage } from './pages/search/SearchPage';
@@ -71,6 +73,8 @@ export function App() {
             <Route path="search" element={<SearchPage />} />
             <Route path="finance" element={<FinancePage />} />
             <Route path="hr" element={<HRPage />} />
+            <Route path="projects" element={<ProjectsPage />} />
+            <Route path="inventory" element={<InventoryPage />} />
             <Route path="coding" element={<CodingPage />} />
             <Route path=":module" element={<ModulePage />} />
           </Route>

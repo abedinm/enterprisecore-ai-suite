@@ -16,6 +16,7 @@ from app.core.exceptions import register_exception_handlers
 from app.core.logging import configure_logging
 from app.core.rate_limit import limiter, rate_limit_handler
 from app.db.init_db import init_db
+from app.services.search_index import register_search_listeners
 
 
 @asynccontextmanager
@@ -23,6 +24,7 @@ async def lifespan(_: FastAPI):
     configure_logging()
     logger.info("Starting {} v{} ({}@{})", settings.app_name, __version__, settings.app_env, settings.db_backend)
     init_db()
+    register_search_listeners()
     yield
     logger.info("Shutdown complete")
 
