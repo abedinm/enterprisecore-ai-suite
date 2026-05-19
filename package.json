@@ -1,0 +1,23 @@
+{
+  "name": "enterprisecore-ai-suite",
+  "version": "0.1.0",
+  "private": true,
+  "description": "EnterpriseCore AI Suite — offline business management + AI coding assistant",
+  "scripts": {
+    "setup": "npm run setup:backend && npm run setup:frontend && npm run setup:electron",
+    "setup:backend": "cd backend && python -m venv .venv && .venv\\Scripts\\pip install -r requirements.txt",
+    "setup:frontend": "cd frontend && npm install",
+    "setup:electron": "cd electron && npm install",
+    "dev": "concurrently -k -n BACKEND,FRONTEND -c blue,green \"npm:dev:backend\" \"npm:dev:frontend\"",
+    "dev:backend": "cd backend && .venv\\Scripts\\python -m uvicorn app.main:app --reload --port 8765",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:electron": "cd electron && npm run dev",
+    "build": "npm run build:frontend && npm run build:backend",
+    "build:frontend": "cd frontend && npm run build",
+    "build:backend": "cd backend && .venv\\Scripts\\pyinstaller --onefile --name enterprisecore-backend app/main.py",
+    "build:exe": "npm run build && cd electron && npm run dist"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "app": { "title": "EnterpriseCore AI Suite", "tagline": "Un paquete. Tus datos. Tu máquina. Con o sin internet." },
+  "nav": { "dashboard": "Panel", "finance": "Finanzas", "hr": "RR. HH.", "crm": "CRM", "projects": "Proyectos", "inventory": "Inventario", "documents": "Documentos", "communication": "Comunicación", "security": "Seguridad", "coding": "Codificación IA", "ai": "Cerebro IA", "settings": "Configuración", "users": "Usuarios", "logout": "Cerrar sesión" },
+  "auth": { "email": "Correo", "password": "Contraseña", "fullName": "Nombre completo", "signIn": "Entrar", "signUp": "Crear cuenta", "register": "Registrarse", "needAccount": "¿Necesita una cuenta?", "haveAccount": "¿Ya tiene una cuenta?", "welcome": "Bienvenido", "createAccount": "Cree su cuenta", "loginError": "Correo o contraseña inválidos", "signOut": "Cerrar sesión" },
+  "common": { "search": "Buscar…", "save": "Guardar", "cancel": "Cancelar", "delete": "Eliminar", "create": "Crear", "edit": "Editar", "new": "Nuevo", "actions": "Acciones", "status": "Estado", "name": "Nombre", "loading": "Cargando…", "empty": "Sin elementos", "confirm": "¿Está seguro?", "yes": "Sí", "no": "No", "total": "Total", "date": "Fecha", "amount": "Importe", "notifications": "Notificaciones", "theme": "Tema", "language": "Idioma", "today": "Hoy" },
+  "theme": { "light": "Claro", "dark": "Oscuro", "system": "Sistema" }
+}

@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node
+node_modules/
+dist/
+build/
+.vite/
+
+# Env / secrets
+.env
+.env.local
+*.key
+*.pem
+license.key
+
+# Storage / generated
+backend/storage/uploads/*
+backend/storage/backups/*
+backend/storage/reports/*
+backend/storage/logs/
+backend/storage/*.db
+backend/storage/*.db-journal
+backend/storage/*.db-shm
+backend/storage/*.db-wal
+!backend/storage/uploads/.gitkeep
+!backend/storage/backups/.gitkeep
+!backend/storage/reports/.gitkeep
+
+# TypeScript / Vite build artifacts
+frontend/.tsbuildinfo/
+frontend/*.tsbuildinfo
+frontend/vite.config.d.ts
+frontend/vite.config.js
+
+# Electron
+electron/dist/
+electron/out/
+electron/resources/backend/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db

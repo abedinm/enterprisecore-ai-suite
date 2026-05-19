@@ -1,0 +1,7 @@
+{
+  "app": { "title": "EnterpriseCore AI Suite", "tagline": "Eine Suite. Ihre Daten. Ihr Rechner. Online oder offline." },
+  "nav": { "dashboard": "Übersicht", "finance": "Finanzen", "hr": "Personal", "crm": "CRM", "projects": "Projekte", "inventory": "Inventar", "documents": "Dokumente", "communication": "Kommunikation", "security": "Sicherheit", "coding": "KI-Coding", "ai": "KI-Gehirn", "settings": "Einstellungen", "users": "Benutzer", "logout": "Abmelden" },
+  "auth": { "email": "E-Mail", "password": "Passwort", "fullName": "Vollständiger Name", "signIn": "Anmelden", "signUp": "Konto erstellen", "register": "Registrieren", "needAccount": "Konto benötigt?", "haveAccount": "Bereits ein Konto?", "welcome": "Willkommen", "createAccount": "Konto erstellen", "loginError": "Ungültige E-Mail oder Passwort", "signOut": "Abmelden" },
+  "common": { "search": "Suchen…", "save": "Speichern", "cancel": "Abbrechen", "delete": "Löschen", "create": "Erstellen", "edit": "Bearbeiten", "new": "Neu", "actions": "Aktionen", "status": "Status", "name": "Name", "loading": "Lädt…", "empty": "Keine Einträge", "confirm": "Sind Sie sicher?", "yes": "Ja", "no": "Nein", "total": "Gesamt", "date": "Datum", "amount": "Betrag", "notifications": "Benachrichtigungen", "theme": "Design", "language": "Sprache", "today": "Heute" },
+  "theme": { "light": "Hell", "dark": "Dunkel", "system": "System" }
+}

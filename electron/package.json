@@ -1,0 +1,50 @@
+{
+  "name": "enterprisecore-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "main": "main.js",
+  "description": "EnterpriseCore AI Suite — desktop wrapper",
+  "scripts": {
+    "dev": "cross-env ELECTRON_DEV=1 electron .",
+    "start": "electron .",
+    "dist": "electron-builder --win --x64",
+    "dist:portable": "electron-builder --win portable --x64"
+  },
+  "build": {
+    "appId": "com.enterprisecore.suite",
+    "productName": "EnterpriseCore AI Suite",
+    "asar": true,
+    "directories": { "output": "dist" },
+    "files": [
+      "main.js",
+      "preload.js",
+      "resources/**",
+      "../frontend/dist/**"
+    ],
+    "extraResources": [
+      { "from": "resources/backend", "to": "backend" }
+    ],
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "icon": "resources/icon.ico",
+      "publisherName": "EnterpriseCore"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "EnterpriseCore AI Suite",
+      "license": "../docs/LICENSE.txt"
+    }
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8"
+  },
+  "dependencies": {
+    "electron-updater": "^6.3.9"
+  }
+}

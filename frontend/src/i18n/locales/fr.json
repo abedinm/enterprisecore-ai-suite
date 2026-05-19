@@ -1,0 +1,7 @@
+{
+  "app": { "title": "EnterpriseCore AI Suite", "tagline": "Une suite. Vos données. Votre machine. En ligne ou hors ligne." },
+  "nav": { "dashboard": "Tableau de bord", "finance": "Finance", "hr": "RH", "crm": "CRM", "projects": "Projets", "inventory": "Inventaire", "documents": "Documents", "communication": "Communication", "security": "Sécurité", "coding": "Codage IA", "ai": "Cerveau IA", "settings": "Paramètres", "users": "Utilisateurs", "logout": "Déconnexion" },
+  "auth": { "email": "E-mail", "password": "Mot de passe", "fullName": "Nom complet", "signIn": "Se connecter", "signUp": "Créer un compte", "register": "S'inscrire", "needAccount": "Besoin d'un compte ?", "haveAccount": "Déjà un compte ?", "welcome": "Bienvenue", "createAccount": "Créez votre compte", "loginError": "E-mail ou mot de passe invalides", "signOut": "Déconnexion" },
+  "common": { "search": "Rechercher…", "save": "Enregistrer", "cancel": "Annuler", "delete": "Supprimer", "create": "Créer", "edit": "Modifier", "new": "Nouveau", "actions": "Actions", "status": "Statut", "name": "Nom", "loading": "Chargement…", "empty": "Aucun élément", "confirm": "Êtes-vous sûr ?", "yes": "Oui", "no": "Non", "total": "Total", "date": "Date", "amount": "Montant", "notifications": "Notifications", "theme": "Thème", "language": "Langue", "today": "Aujourd'hui" },
+  "theme": { "light": "Clair", "dark": "Sombre", "system": "Système" }
+}

@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-surface: 250 250 252;
+    --color-surface-muted: 244 244 248;
+    --color-surface-elevated: 255 255 255;
+    --color-ink: 17 24 39;
+    --color-ink-muted: 75 85 99;
+    --color-ink-subtle: 156 163 175;
+    --color-border: 229 231 235;
+  }
+  .dark {
+    --color-surface: 12 15 22;
+    --color-surface-muted: 19 23 33;
+    --color-surface-elevated: 24 28 40;
+    --color-ink: 240 244 248;
+    --color-ink-muted: 174 184 198;
+    --color-ink-subtle: 120 130 145;
+    --color-border: 40 46 60;
+  }
+  html, body, #root { height: 100%; }
+  body { font-family: 'Inter', system-ui, sans-serif; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: rgb(var(--color-border)); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgb(var(--color-ink-subtle)); }
+}
+
+@layer components {
+  .ec-card {
+    @apply rounded-xl border border-border bg-surface-elevated shadow-card;
+  }
+  .ec-btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-brand-500/40 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .ec-btn-primary { @apply ec-btn bg-brand-600 text-white hover:bg-brand-700; }
+  .ec-btn-secondary { @apply ec-btn bg-surface-muted text-ink hover:bg-surface-elevated border border-border; }
+  .ec-btn-danger { @apply ec-btn bg-rose-600 text-white hover:bg-rose-700; }
+  .ec-btn-ghost { @apply ec-btn text-ink-muted hover:bg-surface-muted; }
+  .ec-input {
+    @apply w-full rounded-lg border border-border bg-surface-elevated px-3 py-2 text-sm placeholder:text-ink-subtle focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30;
+  }
+  .ec-label { @apply mb-1 block text-xs font-medium uppercase tracking-wider text-ink-muted; }
+  .ec-table { @apply w-full text-sm; }
+  .ec-table th { @apply px-3 py-2 text-left font-medium text-ink-muted border-b border-border; }
+  .ec-table td { @apply px-3 py-2 border-b border-border/60; }
+  .ec-badge { @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium; }
+  .ec-badge-green { @apply ec-badge bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300; }
+  .ec-badge-amber { @apply ec-badge bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300; }
+  .ec-badge-rose { @apply ec-badge bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300; }
+  .ec-badge-blue { @apply ec-badge bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300; }
+}

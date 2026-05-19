@@ -1,0 +1,65 @@
+{
+  "app": {
+    "title": "EnterpriseCore AI Suite",
+    "tagline": "One suite. Your data. Your machine. Online or off."
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "finance": "Finance",
+    "hr": "HR",
+    "crm": "CRM",
+    "projects": "Projects",
+    "inventory": "Inventory",
+    "documents": "Documents",
+    "communication": "Communication",
+    "security": "Security",
+    "coding": "AI Coding",
+    "ai": "AI Brain",
+    "settings": "Settings",
+    "users": "Users",
+    "logout": "Sign out"
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Password",
+    "fullName": "Full name",
+    "signIn": "Sign in",
+    "signUp": "Create account",
+    "register": "Register",
+    "needAccount": "Need an account?",
+    "haveAccount": "Already have an account?",
+    "welcome": "Welcome back",
+    "createAccount": "Create your account",
+    "loginError": "Invalid email or password",
+    "signOut": "Sign out"
+  },
+  "common": {
+    "search": "Search…",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "create": "Create",
+    "edit": "Edit",
+    "new": "New",
+    "actions": "Actions",
+    "status": "Status",
+    "name": "Name",
+    "loading": "Loading…",
+    "empty": "Nothing here yet",
+    "confirm": "Are you sure?",
+    "yes": "Yes",
+    "no": "No",
+    "total": "Total",
+    "date": "Date",
+    "amount": "Amount",
+    "notifications": "Notifications",
+    "theme": "Theme",
+    "language": "Language",
+    "today": "Today"
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  }
+}
