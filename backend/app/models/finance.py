@@ -50,11 +50,13 @@ class InvoiceLine(IdMixin, TimestampMixin, Base):
 
 
 class ExpenseCategory(IdMixin, TimestampMixin, Base):
+    __tablename__ = "expense_categories"
+
     name: Mapped[str] = mapped_column(String(120), unique=True)
 
 
 class Expense(IdMixin, TimestampMixin, Base):
-    category_id: Mapped[str | None] = mapped_column(ForeignKey("expense_categorys.id", ondelete="SET NULL"))
+    category_id: Mapped[str | None] = mapped_column(ForeignKey("expense_categories.id", ondelete="SET NULL"))
     vendor_id: Mapped[str | None] = mapped_column(ForeignKey("vendors.id", ondelete="SET NULL"))
     date: Mapped[date] = mapped_column(Date, index=True)
     amount: Mapped[Decimal] = mapped_column(Numeric(14, 2))
@@ -121,7 +123,7 @@ class JournalEntry(IdMixin, TimestampMixin, Base):
 
 
 class JournalLine(IdMixin, TimestampMixin, Base):
-    journal_entry_id: Mapped[str] = mapped_column(ForeignKey("journal_entrys.id", ondelete="CASCADE"))
+    journal_entry_id: Mapped[str] = mapped_column(ForeignKey("journal_entries.id", ondelete="CASCADE"))
     account: Mapped[str] = mapped_column(String(160))
     debit: Mapped[Decimal] = mapped_column(Numeric(14, 2), default=0)
     credit: Mapped[Decimal] = mapped_column(Numeric(14, 2), default=0)

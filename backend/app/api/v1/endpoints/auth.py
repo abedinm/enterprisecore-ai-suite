@@ -128,19 +128,21 @@ def login(
 
 @router.post("/refresh", response_model=TokenResponse)
 def refresh_tokens(payload: RefreshRequest, db: Session = Depends(get_db)) -> TokenResponse:
+    # Verify signature + expiry on the JWT itself first (fast, no DB).
     data = decode_token(payload.refresh_token, expected_type="refresh")
     user = db.get(User, data["sub"])
     if not user or not user.is_active:
         raise AuthenticationError("User account is inactive or does not exist")
 
-    stored = db.scalars(
-        select(RefreshToken).where(RefreshToken.user_id == user.id, RefreshToken.revoked_at.is_(None))
-    ).all()
-    matched = None
-    for token in stored:
-        if verify_refresh_token(payload.refresh_token, token.token_hash):
-            matched = token
-            break
+    # Direct indexed lookup by HMAC-SHA256 hash — O(log n), not O(n × bcrypt).
+    token_hash = hash_refresh_token(payload.refresh_token)
+    matched = db.scalar(
+        select(RefreshToken).where(
+            RefreshToken.token_hash == token_hash,
+            RefreshToken.user_id == user.id,
+            RefreshToken.revoked_at.is_(None),
+        )
+    )
     if not matched:
         raise AuthenticationError("Refresh token is not recognised or has been revoked")
     expires_at = matched.expires_at
@@ -164,15 +166,25 @@ def logout(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    tokens = db.scalars(
-        select(RefreshToken).where(RefreshToken.user_id == current_user.id, RefreshToken.revoked_at.is_(None))
-    ).all()
     if payload and payload.refresh_token:
-        for token in tokens:
-            if verify_refresh_token(payload.refresh_token, token.token_hash):
-                token.revoked_at = datetime.now(timezone.utc)
-                break
+        # Single indexed lookup instead of linear scan + per-row hash compare.
+        token_hash = hash_refresh_token(payload.refresh_token)
+        match = db.scalar(
+            select(RefreshToken).where(
+                RefreshToken.token_hash == token_hash,
+                RefreshToken.user_id == current_user.id,
+                RefreshToken.revoked_at.is_(None),
+            )
+        )
+        if match:
+            match.revoked_at = datetime.now(timezone.utc)
     else:
+        tokens = db.scalars(
+            select(RefreshToken).where(
+                RefreshToken.user_id == current_user.id,
+                RefreshToken.revoked_at.is_(None),
+            )
+        ).all()
         for token in tokens:
             token.revoked_at = datetime.now(timezone.utc)
     record_audit(

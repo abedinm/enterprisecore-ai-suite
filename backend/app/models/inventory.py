@@ -43,8 +43,10 @@ class WarehouseZone(IdMixin, TimestampMixin, Base):
 
 
 class ProductCategory(IdMixin, TimestampMixin, Base):
+    __tablename__ = "product_categories"
+
     name: Mapped[str] = mapped_column(String(120), index=True)
-    parent_id: Mapped[str | None] = mapped_column(ForeignKey("product_categorys.id", ondelete="SET NULL"))
+    parent_id: Mapped[str | None] = mapped_column(ForeignKey("product_categories.id", ondelete="SET NULL"))
     description: Mapped[str] = mapped_column(Text, default="")
 
 
@@ -52,7 +54,7 @@ class Product(IdMixin, TimestampMixin, Base):
     sku: Mapped[str] = mapped_column(String(80), unique=True, index=True)
     name: Mapped[str] = mapped_column(String(180), index=True)
     description: Mapped[str] = mapped_column(Text, default="")
-    category_id: Mapped[str | None] = mapped_column(ForeignKey("product_categorys.id", ondelete="SET NULL"))
+    category_id: Mapped[str | None] = mapped_column(ForeignKey("product_categories.id", ondelete="SET NULL"))
     unit_cost: Mapped[Decimal] = mapped_column(Numeric(14, 2), default=0)
     unit_price: Mapped[Decimal] = mapped_column(Numeric(14, 2), default=0)
     low_stock_threshold: Mapped[int] = mapped_column(Integer, default=0)

@@ -27,18 +27,34 @@ def _ulid() -> str:
             return uuid.uuid4().hex
 
 
+_VOWELS = set("aeiou")
+
+
+def _pluralize(snake: str) -> str:
+    """Best-effort English pluralization for class-derived table names.
+
+    Handles the common patterns (-y/ies, -s/ses, -x/xes, -ch/ches, -sh/shes,
+    already-plural, default +s). Models with surprising plurals (criteria,
+    indices, etc.) should set `__tablename__` explicitly.
+    """
+    if snake.endswith("s"):
+        return snake
+    if len(snake) >= 2 and snake[-1] == "y" and snake[-2] not in _VOWELS:
+        return snake[:-1] + "ies"
+    if snake.endswith(("x", "ch", "sh", "ss")):
+        return snake + "es"
+    return snake + "s"
+
+
 class Base(DeclarativeBase):
     """Common base. All ORM models inherit from this."""
 
     @declared_attr.directive
     def __tablename__(cls) -> str:  # noqa: N805
-        # CamelCase -> snake_case, then pluralize naively (add 's')
         import re
 
-        name = re.sub(r"(?<!^)(?=[A-Z])", "_", cls.__name__).lower()
-        if not name.endswith("s"):
-            name += "s"
-        return name
+        snake = re.sub(r"(?<!^)(?=[A-Z])", "_", cls.__name__).lower()
+        return _pluralize(snake)
 
 
 class TimestampMixin:
