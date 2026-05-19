@@ -5,15 +5,18 @@ slowapi 0.1.9's @limiter.limit decorator wraps the function with a sync trampoli
 that breaks FastAPI's signature introspection when annotations are strings, leading
 to "missing query param payload" errors. Real runtime annotations sidestep this.
 """
+import io
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Annotated
 
-from fastapi import APIRouter, Body, Depends, Request, status
+from fastapi import APIRouter, Body, Depends, File, Request, UploadFile, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
-from app.core.exceptions import AuthenticationError, ConflictError
+from app.core.config import settings as app_settings
+from app.core.exceptions import AuthenticationError, ConflictError, ValidationFailed
 from app.core.rate_limit import RateLimit
 from app.core.security import (
     create_access_token,
@@ -234,6 +237,86 @@ def update_me(
     db.commit()
     db.refresh(current_user)
     return current_user
+
+
+AVATAR_DIR = "avatars"
+ALLOWED_AVATAR_TYPES = {"image/png", "image/jpeg", "image/webp"}
+MAX_AVATAR_BYTES = 2 * 1024 * 1024  # 2 MB before any resizing
+AVATAR_MAX_DIM = 512  # downscaled to a 512×512 square for predictable sizes
+
+
+def _avatar_storage_dir() -> Path:
+    d = app_settings.storage_dir / "uploads" / AVATAR_DIR
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+@router.post("/me/avatar", response_model=UserRead)
+async def upload_avatar(
+    file: Annotated[UploadFile, File(...)],
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Upload a new avatar image. PNG/JPEG/WEBP only, max 2 MB.
+
+    Image is re-encoded as PNG and resized to fit within 512×512 to strip any
+    embedded metadata (EXIF GPS, ICC colour profiles, etc.) and normalise to a
+    predictable on-disk size."""
+    content_type = (file.content_type or "").lower()
+    if content_type not in ALLOWED_AVATAR_TYPES:
+        raise ValidationFailed(
+            f"Unsupported file type {content_type!r}. Allowed: PNG, JPEG, WEBP."
+        )
+
+    raw = await file.read()
+    if len(raw) > MAX_AVATAR_BYTES:
+        raise ValidationFailed(
+            f"Avatar is too large ({len(raw)} bytes). Max {MAX_AVATAR_BYTES // 1024} KB."
+        )
+    if not raw:
+        raise ValidationFailed("Empty upload.")
+
+    try:
+        from PIL import Image
+    except Exception as exc:  # pragma: no cover
+        raise ValidationFailed("Pillow is required for image uploads on the server") from exc
+
+    try:
+        img = Image.open(io.BytesIO(raw))
+        img.load()
+    except Exception as exc:
+        raise ValidationFailed("File is not a recognisable image") from exc
+
+    img.thumbnail((AVATAR_MAX_DIM, AVATAR_MAX_DIM))
+    # Convert to RGBA for PNG; drop EXIF and other metadata.
+    if img.mode not in ("RGB", "RGBA"):
+        img = img.convert("RGBA")
+
+    storage_path = _avatar_storage_dir() / f"{current_user.id}.png"
+    img.save(storage_path, format="PNG", optimize=True)
+
+    # /files is mounted at app startup pointing to storage/uploads — see main.py.
+    current_user.avatar_url = f"/files/{AVATAR_DIR}/{storage_path.name}"
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+
+@router.delete("/me/avatar", status_code=status.HTTP_204_NO_CONTENT)
+def delete_avatar(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Remove the current user's avatar. Idempotent — succeeds even if no avatar exists."""
+    storage_path = _avatar_storage_dir() / f"{current_user.id}.png"
+    try:
+        storage_path.unlink(missing_ok=True)
+    except Exception:  # pragma: no cover  — best-effort delete
+        pass
+    if current_user.avatar_url:
+        current_user.avatar_url = None
+        db.commit()
+    return None
 
 
 @router.post("/me/password", status_code=status.HTTP_204_NO_CONTENT)

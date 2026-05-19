@@ -13,6 +13,7 @@ from app import __version__
 from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.exceptions import register_exception_handlers
+from app.core.license_key import warn_on_startup as warn_on_license_startup
 from app.core.logging import configure_logging
 from app.core.rate_limit import limiter, rate_limit_handler
 from app.db.init_db import init_db
@@ -25,6 +26,7 @@ async def lifespan(_: FastAPI):
     logger.info("Starting {} v{} ({}@{})", settings.app_name, __version__, settings.app_env, settings.db_backend)
     init_db()
     register_search_listeners()
+    warn_on_license_startup()
     yield
     logger.info("Shutdown complete")
 

@@ -4,8 +4,8 @@ from fastapi import APIRouter
 
 from app.api.v1.endpoints import (
     ai, auth, coding, communication, crm, dashboard, documents, finance, hr,
-    inventory, modules, notifications, projects, search, security_mod, settings,
-    users,
+    inventory, license, modules, notifications, projects, search, security_mod,
+    settings, users,
 )
 
 api_router = APIRouter()
@@ -26,3 +26,4 @@ api_router.include_router(communication.router, prefix="/communication", tags=["
 api_router.include_router(security_mod.router, prefix="/security", tags=["security"])
 api_router.include_router(coding.router, prefix="/coding", tags=["coding"])
 api_router.include_router(ai.router, prefix="/ai", tags=["ai"])
+api_router.include_router(license.router, prefix="/license", tags=["license"])
