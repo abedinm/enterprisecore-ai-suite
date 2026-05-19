@@ -991,7 +991,7 @@ def audit_trail(entity_type: str | None = None,
         {
             "id": r.id, "action": r.action, "entity_type": r.entity_type,
             "entity_id": r.entity_id, "actor_id": r.actor_id,
-            "detail": json.loads(r.detail or "{}"), "created_at": r.created_at,
+            "detail": r.detail or {}, "created_at": r.created_at,
         }
         for r in rows
     ]
