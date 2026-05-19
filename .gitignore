@@ -55,3 +55,9 @@ Thumbs.db
 # Server runtime logs
 backend/uvicorn.*.log
 *.tsbuildinfo
+
+# Coverage / test artifacts
+.coverage
+backend/.coverage
+htmlcov/
+coverage.xml

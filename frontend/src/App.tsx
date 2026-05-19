@@ -14,6 +14,9 @@ import { ProjectsPage } from './pages/projects/ProjectsPage';
 import { InventoryPage } from './pages/inventory/InventoryPage';
 import { CodingPage } from './pages/coding/CodingPage';
 import { AIBrainPage } from './pages/ai/AIBrainPage';
+import { DocumentsPage } from './pages/documents/DocumentsPage';
+import { CommunicationPage } from './pages/communication/CommunicationPage';
+import { SecurityPage } from './pages/security/SecurityPage';
 import { ModulePage } from './pages/ModulePage';
 import { SearchPage } from './pages/search/SearchPage';
 import { SettingsPage } from './pages/settings/SettingsPage';
@@ -82,6 +85,9 @@ export function App() {
               <Route path="inventory" element={<ErrorBoundary><InventoryPage /></ErrorBoundary>} />
               <Route path="coding" element={<ErrorBoundary><CodingPage /></ErrorBoundary>} />
               <Route path="ai" element={<ErrorBoundary><AIBrainPage /></ErrorBoundary>} />
+              <Route path="documents" element={<ErrorBoundary><DocumentsPage /></ErrorBoundary>} />
+              <Route path="communication" element={<ErrorBoundary><CommunicationPage /></ErrorBoundary>} />
+              <Route path="security" element={<ErrorBoundary><SecurityPage /></ErrorBoundary>} />
               <Route path=":module" element={<ErrorBoundary><ModulePage /></ErrorBoundary>} />
             </Route>
           </Routes>

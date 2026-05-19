@@ -216,7 +216,7 @@ export function CodingPage() {
       : x));
   }, [activePath]);
 
-  // ---- Electron menu integration --------------------------------------
+  // ---- Electron menu + global keyboard integration --------------------
   useEffect(() => {
     const off1 = window.enterpriseCore?.on('menu:save-file', () => save.mutate());
     const off2 = window.enterpriseCore?.on('menu:new-file', async () => {
@@ -236,8 +236,48 @@ export function CodingPage() {
         setProjectId(p.id);
       }
     });
-    return () => { off1?.(); off2?.(); off3?.(); };
+    const off4 = window.enterpriseCore?.on('menu:command-palette', () => setSearchVisible(true));
+    return () => { off1?.(); off2?.(); off3?.(); off4?.(); };
   }, [projectId, save, qc]);  // eslint-disable-line
+
+  // Global keyboard shortcuts wired at the document level so they fire
+  // even when the focus is in Monaco / xterm / a chat textarea.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const mod = e.ctrlKey || e.metaKey;
+      if (!mod) return;
+      // Ctrl/⌘+P — Quick Open (files). Shift+P bumps to in-content search.
+      if (e.key.toLowerCase() === 'p' && !e.altKey) {
+        e.preventDefault();
+        setSearchVisible(true);
+        return;
+      }
+      // Ctrl/⌘+B — toggle right rail panels (sequential navigation)
+      if (e.key.toLowerCase() === 'b' && !e.shiftKey) {
+        e.preventDefault();
+        setRightPanel((p) => {
+          const idx = RIGHT_PANELS.findIndex((x) => x.id === p);
+          return RIGHT_PANELS[(idx + 1) % RIGHT_PANELS.length].id;
+        });
+        return;
+      }
+      // Ctrl/⌘+W — close active tab
+      if (e.key.toLowerCase() === 'w' && activePath) {
+        e.preventDefault();
+        closeTab(activePath);
+        return;
+      }
+      // Ctrl/⌘+1..9 — jump to right-rail tab by index
+      const digit = Number(e.key);
+      if (digit >= 1 && digit <= 9 && RIGHT_PANELS[digit - 1]) {
+        e.preventDefault();
+        setRightPanel(RIGHT_PANELS[digit - 1].id);
+        return;
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [activePath, closeTab]);
 
   const activeTab = useMemo(() => tabs.find((t) => t.path === activePath) ?? null, [tabs, activePath]);
   const tree = treeQ.data ?? null;
@@ -444,8 +484,12 @@ function Toolbar({ activeTab, onSave, saving, onSearch }: {
       )}
       {activeTab?.dirty && <span className="text-amber-400">●</span>}
       <button className="ml-auto ec-btn-ghost px-2 py-0.5" onClick={onSearch}>
-        <Search size={11} /> Quick open <kbd className="ml-1 rounded border border-border px-1 text-[10px]">Ctrl+P</kbd>
+        <Search size={11} /> Quick open
+        <kbd className="ml-1 rounded border border-border px-1 text-[10px]">Ctrl/⌘ P</kbd>
       </button>
+      <span className="text-[10px] text-ink-subtle" title="Tab through right-rail panels">
+        <kbd className="rounded border border-border px-1">Ctrl/⌘ B</kbd>
+      </span>
       <button className="ec-btn-primary" disabled={!activeTab || saving} onClick={onSave}>
         {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
         Save

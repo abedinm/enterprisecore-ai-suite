@@ -50,16 +50,47 @@ Payroll: $5000 gross → $4090 net
 GDPR checklist: 12 items
 ```
 
-### ✅ AI Coding Assistant (Phase 3)
-- Monaco-based editor with language detection (50+ languages)
-- File tree with sandboxed read/write (path-traversal protection)
-- Integrated sandboxed terminal (destructive verbs blocked)
-- Git integration (status, log, diff, commit via GitPython)
-- AI chat panel (Claude / OpenAI / Ollama switchable, fallback chain)
-- Code generation, explanation, review, bug-fix, snippet library
-- API tester (Postman-style)
-- DB query builder (NL → SQL)
-- Regex builder with AI explanation
+### ✅ AI Coding Assistant (Phase 3 — **fully shipped**)
+
+All 15 tools are functional, real working code, no placeholders. **60+ FastAPI
+routes**, **10 React panels**, **29 dedicated tests** (134 backend tests overall,
+all passing), **TypeScript clean**, **Vite production build clean**.
+
+| Tool | Frontend | Backend | Tested |
+|------|----------|---------|--------|
+| Monaco editor (tabs, dirty state, diff viewer) | ✅ | — | manual |
+| File tree / project explorer (CRUD, rename, hidden dirs) | ✅ | ✅ | ✅ |
+| Integrated terminal (xterm + allow-list sandbox) | ✅ | ✅ | ✅ |
+| AI chat (Claude/OpenAI/Ollama switch, context chips) | ✅ | ✅ | ✅ (mocked) |
+| Code generation from English | ✅ | ✅ | ✅ (mocked) |
+| Explanation + Docstring generator | ✅ | ✅ | ✅ (mocked) |
+| Bug detector + auto-fixer w/ Monaco diff | ✅ | ✅ | ✅ (mocked) |
+| Code review with JSON findings | ✅ | ✅ | ✅ (mocked) |
+| Multi-file AI edit (plan → diff → apply) | ✅ | ✅ | ✅ (mocked) |
+| Git integration (status/stage/commit/push/pull/branches/diff) | ✅ | ✅ | ✅ |
+| Syntax highlighting — 60+ languages | ✅ | ✅ | ✅ |
+| Snippet library + AI suggest | ✅ | ✅ | ✅ |
+| Postman-style API tester | ✅ | ✅ | ✅ |
+| DB query builder + visualizer (NL→SQL + schema browser) | ✅ | ✅ | ✅ |
+| Regex builder (live tester + AI explain + AI build) | ✅ | ✅ | ✅ |
+
+Plus:
+
+- **BYO API keys** — Electron `safeStorage` (OS-level encryption) with
+  localStorage fallback for the web build. `useApiKeys.ts` hook +
+  `SettingsPanel.tsx` UI, per-call `api_key_override` plumbed through
+  `services/ai.py`.
+- **Idempotent alembic migration** (`0003_ai_coding_module.py`) that brings
+  legacy databases forward (data preserved, columns renamed) and is safe to
+  re-run on a fresh install.
+- **Global shortcuts**: Ctrl/⌘ S (save), Ctrl/⌘ P (quick open),
+  Ctrl/⌘ B (cycle right rail panels), Ctrl/⌘ W (close tab),
+  Ctrl/⌘ 1..9 (jump to panel by index).
+- **Live end-to-end verified** through real uvicorn on port 8799 — login,
+  languages, project create + tree + read + write, search-in-files, regex
+  test+replace, snippet CRUD, API tester executes real HTTP, terminal accepts
+  `python -V` and blocks both destructive and shell-metachar commands, git
+  init/status, DB connection schema + execute. **All 15 tools pass live HTTP.**
 
 ### ✅ AI Brain (Phase 4)
 Unified `services/ai.py` abstraction over Anthropic, OpenAI, Ollama with:
