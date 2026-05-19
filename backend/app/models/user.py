@@ -3,7 +3,7 @@ from __future__ import annotations
 import enum
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import JSON, Boolean, DateTime, Enum, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, IdMixin, TimestampMixin
@@ -53,7 +53,8 @@ class AuditLog(IdMixin, TimestampMixin, Base):
     entity_type: Mapped[str] = mapped_column(String(120), index=True)
     entity_id: Mapped[str | None] = mapped_column(String(64), index=True)
     ip_address: Mapped[str | None] = mapped_column(String(64))
-    detail: Mapped[str] = mapped_column(Text, default="{}")
+    # JSON column: SQLite stores as TEXT, PostgreSQL as JSONB → queryable.
+    detail: Mapped[dict] = mapped_column(JSON, default=dict)
 
 
 class Notification(IdMixin, TimestampMixin, Base):

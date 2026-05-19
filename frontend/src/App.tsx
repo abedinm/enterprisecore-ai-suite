@@ -13,6 +13,7 @@ import { CRMPage } from './pages/crm/CRMPage';
 import { ProjectsPage } from './pages/projects/ProjectsPage';
 import { InventoryPage } from './pages/inventory/InventoryPage';
 import { CodingPage } from './pages/coding/CodingPage';
+import { AIBrainPage } from './pages/ai/AIBrainPage';
 import { ModulePage } from './pages/ModulePage';
 import { SearchPage } from './pages/search/SearchPage';
 import { SettingsPage } from './pages/settings/SettingsPage';
@@ -80,6 +81,7 @@ export function App() {
               <Route path="projects" element={<ErrorBoundary><ProjectsPage /></ErrorBoundary>} />
               <Route path="inventory" element={<ErrorBoundary><InventoryPage /></ErrorBoundary>} />
               <Route path="coding" element={<ErrorBoundary><CodingPage /></ErrorBoundary>} />
+              <Route path="ai" element={<ErrorBoundary><AIBrainPage /></ErrorBoundary>} />
               <Route path=":module" element={<ErrorBoundary><ModulePage /></ErrorBoundary>} />
             </Route>
           </Routes>
