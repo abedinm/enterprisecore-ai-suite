@@ -1,0 +1,97 @@
+# Render Blueprint — EnterpriseCore AI Suite (hosted demo)
+#
+# Provisions:
+#   1. Postgres database (free 90 days, then $7/mo)
+#   2. FastAPI backend as a Python web service
+#   3. React frontend as a static site
+#
+# NOTE: This is a *hosted demo* of an offline-first product. The whole point of
+# EnterpriseCore is that it runs on the customer's hardware. Use this Render
+# deploy as a try-before-you-buy sandbox only — do not pitch this URL as the
+# product. Production buyers want the installer.
+
+databases:
+  - name: enterprisecore-db
+    plan: free
+    databaseName: enterprisecore
+    user: enterprisecore
+    postgresMajorVersion: 16
+
+services:
+  # ── Backend ─────────────────────────────────────────────────────────────
+  - type: web
+    name: enterprisecore-backend
+    runtime: python
+    plan: free
+    region: oregon
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt && alembic upgrade head
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_HOST
+        value: 0.0.0.0
+      - key: DB_BACKEND
+        value: postgres
+      - key: POSTGRES_DSN
+        fromDatabase:
+          name: enterprisecore-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ENCRYPTION_KEY
+        # Must be a Fernet key (URL-safe base64, 32 bytes).
+        # Render's generateValue produces a compatible value — but if Fernet
+        # rejects it on boot, regenerate manually via:
+        #   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+        generateValue: true
+      - key: ACCESS_TOKEN_TTL_MINUTES
+        value: "60"
+      - key: REFRESH_TOKEN_TTL_DAYS
+        value: "14"
+      - key: PASSWORD_MIN_LENGTH
+        value: "10"
+      - key: CORS_ORIGINS
+        # Allow the frontend static site to call this API
+        fromService:
+          type: web
+          name: enterprisecore-frontend
+          property: host
+
+  # ── Frontend ────────────────────────────────────────────────────────────
+  - type: web
+    name: enterprisecore-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    autoDeploy: true
+    pullRequestPreviewsEnabled: false
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: enterprisecore-backend
+          property: host
+    routes:
+      # SPA fallback — every unknown route serves index.html so React Router works
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
