@@ -10,6 +10,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, require_roles
+from app.api.pagination import Page, PaginationParams, paginate
 from app.core.exceptions import NotFoundError
 from app.db.session import get_db
 from app.models.finance import (
@@ -115,11 +116,26 @@ def _invoice_to_out(invoice: Invoice) -> dict:
 # ============== Customers ================================================
 @router.get("/customers", response_model=list[CustomerOut])
 def list_customers(q: str | None = None, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+    """Legacy unpaginated list (capped at 500). Use ``GET /finance/customers/page`` for paged."""
     stmt = select(Customer).order_by(Customer.name)
     if q:
         like = f"%{q}%"
         stmt = stmt.where(or_(Customer.name.ilike(like), Customer.email.ilike(like)))
     return db.scalars(stmt.limit(500)).all()
+
+
+@router.get("/customers/page", response_model=Page[CustomerOut])
+def list_customers_page(
+    q: str | None = None,
+    pagination: PaginationParams = Depends(),
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    stmt = select(Customer).order_by(Customer.name)
+    if q:
+        like = f"%{q}%"
+        stmt = stmt.where(or_(Customer.name.ilike(like), Customer.email.ilike(like)))
+    return paginate(db, stmt, CustomerOut, pagination)
 
 
 @router.post("/customers", response_model=CustomerOut)
@@ -210,6 +226,7 @@ def delete_vendor(vid: str, db: Session = Depends(get_db),
 @router.get("/invoices", response_model=list[InvoiceOut])
 def list_invoices(status: str | None = None, customer_id: str | None = None,
                   db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+    """Legacy unpaginated list (capped at 500). Use ``GET /finance/invoices/page`` for paged."""
     stmt = select(Invoice).order_by(Invoice.issue_date.desc())
     if status:
         stmt = stmt.where(Invoice.status == status)
@@ -217,6 +234,35 @@ def list_invoices(status: str | None = None, customer_id: str | None = None,
         stmt = stmt.where(Invoice.customer_id == customer_id)
     invoices = db.scalars(stmt.limit(500)).all()
     return [_invoice_to_out(inv) for inv in invoices]
+
+
+@router.get("/invoices/page")
+def list_invoices_page(
+    status: str | None = None,
+    customer_id: str | None = None,
+    pagination: PaginationParams = Depends(),
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    """Paginated invoice list. Returns `{items, total, page, page_size, total_pages}`
+    where each item has the full nested-lines shape from `_invoice_to_out`."""
+    stmt = select(Invoice).order_by(Invoice.issue_date.desc())
+    if status:
+        stmt = stmt.where(Invoice.status == status)
+    if customer_id:
+        stmt = stmt.where(Invoice.customer_id == customer_id)
+
+    total = int(db.scalar(select(func.count()).select_from(stmt.order_by(None).subquery())) or 0)
+    rows = db.scalars(stmt.offset(pagination.offset).limit(pagination.limit)).all()
+    items = [_invoice_to_out(inv) for inv in rows]
+    from math import ceil
+    return {
+        "items": items,
+        "total": total,
+        "page": pagination.page,
+        "page_size": pagination.page_size,
+        "total_pages": ceil(total / pagination.page_size) if total else 0,
+    }
 
 
 @router.post("/invoices", response_model=InvoiceOut)

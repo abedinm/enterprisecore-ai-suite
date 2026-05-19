@@ -6,6 +6,7 @@ from sqlalchemy import func, or_, select, update
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, require_roles
+from app.api.pagination import Page, PaginationParams, paginate
 from app.core.exceptions import NotFoundError
 from app.db.session import get_db
 from app.models.user import Notification, User, UserRole
@@ -25,11 +26,27 @@ def list_notifications(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    """Latest N notifications for the bell dropdown. Use ``GET /notifications/page``
+    for a full paginated list (e.g. notifications archive screen)."""
     stmt = select(Notification).where(_own_or_broadcast(current_user.id))
     if unread_only:
         stmt = stmt.where(Notification.is_read.is_(False))
     stmt = stmt.order_by(Notification.created_at.desc()).limit(limit)
     return db.scalars(stmt).all()
+
+
+@router.get("/page", response_model=Page[NotificationRead])
+def list_notifications_page(
+    unread_only: bool = Query(False),
+    pagination: PaginationParams = Depends(),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    stmt = select(Notification).where(_own_or_broadcast(current_user.id))
+    if unread_only:
+        stmt = stmt.where(Notification.is_read.is_(False))
+    stmt = stmt.order_by(Notification.created_at.desc())
+    return paginate(db, stmt, NotificationRead, pagination)
 
 
 @router.get("/counts", response_model=NotificationCounts)

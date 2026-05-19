@@ -130,12 +130,13 @@ def db(session_factory):
 
 @pytest.fixture(autouse=True)
 def _reset_rate_limiter():
-    """Wipe the slowapi in-memory bucket between tests so one test's burst doesn't
+    """Wipe both rate-limiter buckets between tests so one test's burst doesn't
     poison the next. The rate-limit-specific test bursts after this reset, so it
     still exercises the real limiter."""
     try:
-        from app.core.rate_limit import limiter
+        from app.core.rate_limit import limiter, reset_dependency_limiter
         limiter.reset()
+        reset_dependency_limiter()
     except Exception:
         pass
     yield

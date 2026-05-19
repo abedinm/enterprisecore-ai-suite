@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
 from app.core.exceptions import AuthenticationError, ConflictError
-from app.core.rate_limit import limiter
+from app.core.rate_limit import RateLimit
 from app.core.security import (
     create_access_token,
     create_refresh_token,
@@ -58,12 +58,16 @@ def _client_ip(request: Request) -> str | None:
     return request.client.host if request.client else None
 
 
-@router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
-@limiter.limit("10/minute")
+@router.post(
+    "/register",
+    response_model=UserRead,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(RateLimit("10/minute", id="auth-register"))],
+)
 def register(
+    payload: UserCreate,
     request: Request,
-    payload: Annotated[UserCreate, Body()],
-    db: Annotated[Session, Depends(get_db)],
+    db: Session = Depends(get_db),
 ) -> User:
     email = str(payload.email).lower().strip()
     if db.scalar(select(User).where(User.email == email)):
@@ -91,12 +95,15 @@ def register(
     return user
 
 
-@router.post("/login", response_model=TokenResponse)
-@limiter.limit("10/minute")
+@router.post(
+    "/login",
+    response_model=TokenResponse,
+    dependencies=[Depends(RateLimit("10/minute", id="auth-login"))],
+)
 def login(
+    payload: LoginRequest,
     request: Request,
-    payload: Annotated[LoginRequest, Body()],
-    db: Annotated[Session, Depends(get_db)],
+    db: Session = Depends(get_db),
 ) -> TokenResponse:
     email = str(payload.email).lower().strip()
     user = db.scalar(select(User).where(User.email == email))
@@ -126,7 +133,11 @@ def login(
     return tokens
 
 
-@router.post("/refresh", response_model=TokenResponse)
+@router.post(
+    "/refresh",
+    response_model=TokenResponse,
+    dependencies=[Depends(RateLimit("60/minute", id="auth-refresh"))],
+)
 def refresh_tokens(payload: RefreshRequest, db: Session = Depends(get_db)) -> TokenResponse:
     # Verify signature + expiry on the JWT itself first (fast, no DB).
     data = decode_token(payload.refresh_token, expected_type="refresh")

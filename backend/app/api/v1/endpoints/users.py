@@ -6,6 +6,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, require_roles
+from app.api.pagination import Page, PaginationParams, paginate
 from app.core.exceptions import ConflictError, NotFoundError
 from app.core.security import hash_password
 from app.db.session import get_db
@@ -15,9 +16,24 @@ from app.schemas.auth import AdminUserUpdate, UserCreate, UserRead
 router = APIRouter()
 
 
-@router.get("", response_model=list[UserRead])
+@router.get("", response_model=list[UserRead], deprecated=True)
 def list_users(
     q: str | None = Query(default=None),
+    db: Session = Depends(get_db),
+    _: User = Depends(require_roles(UserRole.admin, UserRole.manager)),
+):
+    """Legacy unpaginated list — use ``GET /users/page`` instead. Capped at 500 rows."""
+    stmt = select(User)
+    if q:
+        like = f"%{q.lower()}%"
+        stmt = stmt.where(or_(User.email.ilike(like), User.full_name.ilike(like)))
+    return db.scalars(stmt.order_by(User.created_at.desc()).limit(500)).all()
+
+
+@router.get("/page", response_model=Page[UserRead])
+def list_users_page(
+    q: str | None = Query(default=None),
+    pagination: PaginationParams = Depends(),
     db: Session = Depends(get_db),
     _: User = Depends(require_roles(UserRole.admin, UserRole.manager)),
 ):
@@ -25,7 +41,8 @@ def list_users(
     if q:
         like = f"%{q.lower()}%"
         stmt = stmt.where(or_(User.email.ilike(like), User.full_name.ilike(like)))
-    return db.scalars(stmt.order_by(User.created_at.desc()).limit(500)).all()
+    stmt = stmt.order_by(User.created_at.desc())
+    return paginate(db, stmt, UserRead, pagination)
 
 
 @router.post("", response_model=UserRead)

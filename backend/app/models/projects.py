@@ -57,6 +57,8 @@ class Milestone(IdMixin, TimestampMixin, Base):
 
 
 class TimeEntry(IdMixin, TimestampMixin, Base):
+    __tablename__ = "time_entries"
+
     task_id: Mapped[str | None] = mapped_column(ForeignKey("tasks.id", ondelete="SET NULL"))
     user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
@@ -105,6 +107,8 @@ class ResourceAllocation(IdMixin, TimestampMixin, Base):
 
 
 class TaskDependency(IdMixin, TimestampMixin, Base):
+    __tablename__ = "task_dependencies"
+
     task_id: Mapped[str] = mapped_column(ForeignKey("tasks.id", ondelete="CASCADE"), index=True)
     depends_on_task_id: Mapped[str] = mapped_column(ForeignKey("tasks.id", ondelete="CASCADE"), index=True)
     dep_type: Mapped[str] = mapped_column(String(20), default="finish_to_start")
