@@ -7,6 +7,7 @@ import { LoginPage } from './pages/auth/LoginPage';
 import { RegisterPage } from './pages/auth/RegisterPage';
 import { DashboardPage } from './pages/dashboard/DashboardPage';
 import { FinancePage } from './pages/finance/FinancePage';
+import { HRPage } from './pages/hr/HRPage';
 import { CodingPage } from './pages/coding/CodingPage';
 import { ModulePage } from './pages/ModulePage';
 import { SearchPage } from './pages/search/SearchPage';
@@ -69,6 +70,7 @@ export function App() {
             <Route path="settings" element={<SettingsPage />} />
             <Route path="search" element={<SearchPage />} />
             <Route path="finance" element={<FinancePage />} />
+            <Route path="hr" element={<HRPage />} />
             <Route path="coding" element={<CodingPage />} />
             <Route path=":module" element={<ModulePage />} />
           </Route>

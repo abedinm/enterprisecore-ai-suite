@@ -25,6 +25,19 @@ class UserUpdate(BaseModel):
     avatar_url: str | None = Field(default=None, max_length=500)
 
 
+class AdminUserUpdate(BaseModel):
+    """Fields an Admin can change on another user's record."""
+
+    full_name: str | None = Field(default=None, min_length=2, max_length=160)
+    department: str | None = Field(default=None, max_length=120)
+    locale: str | None = Field(default=None, max_length=12)
+    theme: str | None = Field(default=None, max_length=16)
+    avatar_url: str | None = Field(default=None, max_length=500)
+    role: UserRole | None = None
+    is_active: bool | None = None
+    password: str | None = Field(default=None, min_length=10, max_length=128)
+
+
 class LoginRequest(BaseModel):
     email: str = Field(min_length=3, max_length=255)  # accept local-only emails like admin@local
     password: str = Field(min_length=1)

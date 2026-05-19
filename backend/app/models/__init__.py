@@ -15,10 +15,12 @@ from app.models.crm import (  # noqa: F401
 )
 from app.models.projects import (  # noqa: F401
     Project, Task, Sprint, Milestone, TimeEntry, Meeting, MeetingMinute,
+    Resource, ResourceAllocation, TaskDependency,
 )
 from app.models.inventory import (  # noqa: F401
-    Product, StockMovement, Warehouse, PurchaseOrder, PurchaseOrderLine,
-    Supplier, Shipment, ReturnRequest,
+    Product, StockMovement, Warehouse, WarehouseZone, ProductCategory,
+    PurchaseOrder, PurchaseOrderLine, Supplier, Shipment, ShipmentEvent,
+    ReturnRequest, StockAlert,
 )
 from app.models.documents import (  # noqa: F401
     Document, DocumentVersion, DocumentTag, DocumentShare, ESignature, DocumentTemplate,
@@ -31,7 +33,7 @@ from app.models.security import (  # noqa: F401
     PasswordVaultEntry, BackupSchedule, LoginAttempt, ComplianceCheck,
 )
 from app.models.coding import (  # noqa: F401
-    CodeProject, CodeSnippet, ApiRequest, GitRepo,
+    CodeProject, CodeSnippet, ApiRequest, GitRepo, RegexLibraryEntry, DatabaseConnection,
 )
 from app.models.ai import (  # noqa: F401
     AiConversation, AiMessage, AiUsageRecord, Chatbot, ChatbotMessage,

@@ -10,7 +10,7 @@ from app.core.exceptions import ConflictError, NotFoundError
 from app.core.security import hash_password
 from app.db.session import get_db
 from app.models.user import User, UserRole
-from app.schemas.auth import UserCreate, UserRead
+from app.schemas.auth import AdminUserUpdate, UserCreate, UserRead
 
 router = APIRouter()
 
@@ -59,20 +59,20 @@ def get_user(user_id: str, db: Session = Depends(get_db), _: User = Depends(get_
 @router.patch("/{user_id}", response_model=UserRead)
 def update_user(
     user_id: str,
-    payload: dict,
+    payload: AdminUserUpdate,
     db: Session = Depends(get_db),
     _: User = Depends(require_roles(UserRole.admin)),
 ):
     user = db.get(User, user_id)
     if not user:
         raise NotFoundError("User not found")
-    for field in ("full_name", "department", "locale", "theme", "is_active", "avatar_url"):
-        if field in payload:
-            setattr(user, field, payload[field])
-    if "role" in payload:
-        user.role = UserRole(payload["role"]) if payload["role"] in {r.value for r in UserRole} else UserRole[payload["role"]]
-    if "password" in payload and payload["password"]:
-        user.password_hash = hash_password(payload["password"])
+    data = payload.model_dump(exclude_unset=True)
+    if "password" in data:
+        password = data.pop("password")
+        if password:
+            user.password_hash = hash_password(password)
+    for field, value in data.items():
+        setattr(user, field, value)
     db.commit()
     db.refresh(user)
     return user

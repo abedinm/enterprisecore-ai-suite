@@ -61,14 +61,18 @@ def bulk_upsert_settings(
     db: Session = Depends(get_db),
     _: User = Depends(require_roles(UserRole.admin, UserRole.manager)),
 ):
+    secret_set = set(payload.secret_keys)
     updated: list[Setting] = []
     for key, value in payload.updates.items():
         setting = db.scalar(select(Setting).where(Setting.scope == "global", Setting.key == key))
+        is_secret = key in secret_set or (setting.is_secret if setting else False)
+        stored_value = encrypt_text(value) if is_secret else value
         if not setting:
-            setting = Setting(scope="global", key=key, value=value)
+            setting = Setting(scope="global", key=key, value=stored_value, is_secret=is_secret)
             db.add(setting)
         else:
-            setting.value = value
+            setting.value = stored_value
+            setting.is_secret = is_secret
         updated.append(setting)
     db.commit()
     for setting in updated:

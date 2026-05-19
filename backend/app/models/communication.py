@@ -57,6 +57,8 @@ class PollVote(IdMixin, TimestampMixin, Base):
 
 
 class Feedback(IdMixin, TimestampMixin, Base):
+    subject: Mapped[str] = mapped_column(String(200), default="")
+    category: Mapped[str] = mapped_column(String(40), default="general", index=True)
     source: Mapped[str] = mapped_column(String(80), default="internal")
     rating: Mapped[int] = mapped_column(default=0)
     body: Mapped[str] = mapped_column(Text, default="")
@@ -67,3 +69,4 @@ class WikiPage(IdMixin, TimestampMixin, Base):
     slug: Mapped[str] = mapped_column(String(180), unique=True, index=True)
     title: Mapped[str] = mapped_column(String(220), index=True)
     body: Mapped[str] = mapped_column(Text, default="")
+    parent_id: Mapped[str | None] = mapped_column(ForeignKey("wiki_pages.id", ondelete="SET NULL"), nullable=True)

@@ -3,12 +3,14 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Any
 
 from pydantic import BaseModel, Field
 
 from app.schemas.common import ORMModel
 
 
+# ---- Employees ----------------------------------------------------------
 class EmployeeIn(BaseModel):
     employee_code: str = Field(min_length=1, max_length=60)
     full_name: str
@@ -32,6 +34,7 @@ class EmployeeOut(ORMModel):
     status: str
 
 
+# ---- Attendance --------------------------------------------------------
 class AttendanceIn(BaseModel):
     employee_id: str
     clock_in: datetime
@@ -47,6 +50,14 @@ class AttendanceOut(ORMModel):
     source: str
 
 
+class AttendanceSummaryOut(BaseModel):
+    employee_id: str
+    days_present: int
+    hours_total: Decimal
+    last_clock_in: datetime | None
+
+
+# ---- Leave -------------------------------------------------------------
 class LeaveIn(BaseModel):
     employee_id: str
     start_date: date
@@ -69,6 +80,13 @@ class LeaveDecision(BaseModel):
     status: str  # approved|rejected|cancelled
 
 
+class LeaveBalanceOut(BaseModel):
+    employee_id: str
+    by_type: dict[str, int]
+    total_taken: int
+
+
+# ---- Reviews -----------------------------------------------------------
 class ReviewIn(BaseModel):
     employee_id: str
     reviewer_id: str | None = None
@@ -86,9 +104,11 @@ class ReviewOut(ORMModel):
     notes: str
 
 
+# ---- Recruitment -------------------------------------------------------
 class JobOpeningIn(BaseModel):
     title: str
     department: str | None = None
+    status: str = "open"
     description: str = ""
 
 
@@ -117,6 +137,7 @@ class CandidateOut(ORMModel):
     rating: Decimal
 
 
+# ---- Onboarding -------------------------------------------------------
 class OnboardingTaskIn(BaseModel):
     employee_id: str | None = None
     title: str
@@ -132,6 +153,7 @@ class OnboardingTaskOut(ORMModel):
     due_date: date | None
 
 
+# ---- Org chart --------------------------------------------------------
 class OrgUnitIn(BaseModel):
     name: str
     parent_id: str | None = None
@@ -145,6 +167,19 @@ class OrgUnitOut(ORMModel):
     manager_employee_id: str | None
 
 
+class OrgUnitNode(BaseModel):
+    id: str
+    name: str
+    manager_employee_id: str | None
+    manager_name: str | None = None
+    headcount: int = 0
+    children: list["OrgUnitNode"] = []
+
+
+OrgUnitNode.model_rebuild()
+
+
+# ---- Training ---------------------------------------------------------
 class TrainingIn(BaseModel):
     employee_id: str
     course_name: str
@@ -160,6 +195,7 @@ class TrainingOut(ORMModel):
     completed_at: datetime | None
 
 
+# ---- Discipline ------------------------------------------------------
 class DisciplinaryIn(BaseModel):
     employee_id: str
     incident_date: date
@@ -175,6 +211,37 @@ class DisciplinaryOut(ORMModel):
     notes: str
 
 
+# ---- Payslips --------------------------------------------------------
+class PayslipLineRow(BaseModel):
+    label: str
+    amount: Decimal
+    kind: str
+
+
+class PayslipOut(BaseModel):
+    payroll_run_id: str
+    employee_id: str | None
+    employee_name: str | None = None
+    period_start: date
+    period_end: date
+    gross: Decimal
+    deductions: Decimal
+    net: Decimal
+    currency: str = "USD"
+    lines: list[PayslipLineRow] = []
+
+
+# ---- Self service ----------------------------------------------------
+class SelfServiceOut(BaseModel):
+    employee: EmployeeOut | None
+    recent_attendance: list[AttendanceOut] = []
+    upcoming_leaves: list[LeaveOut] = []
+    open_onboarding: list[OnboardingTaskOut] = []
+    training: list[TrainingOut] = []
+    payslips: list[PayslipOut] = []
+
+
+# ---- Analytics -------------------------------------------------------
 class HRAnalyticsOut(BaseModel):
     headcount: int
     active: int
@@ -184,3 +251,8 @@ class HRAnalyticsOut(BaseModel):
     open_positions: int
     candidates_in_pipeline: int
     pending_leave_requests: int
+    by_status: dict[str, int] = {}
+    hires_by_month: dict[str, int] = {}
+    review_avg: Decimal = Decimal("0")
+    training_completion_rate: Decimal = Decimal("0")
+    disciplinary_count: int = 0

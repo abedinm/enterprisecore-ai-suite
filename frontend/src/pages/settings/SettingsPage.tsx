@@ -377,10 +377,13 @@ function SystemPanel() {
     }
   }, [data]);
 
+  const secretKeys = new Set((data ?? []).filter((s) => s.is_secret).map((s) => s.key));
+
   const save = useMutation({
     mutationFn: async (updates: Record<string, string>) => {
       const filtered = Object.fromEntries(Object.entries(updates).filter(([_, v]) => v !== ''));
-      await api.post('/settings/bulk', { updates: filtered });
+      const secret_keys = Object.keys(filtered).filter((k) => secretKeys.has(k));
+      await api.post('/settings/bulk', { updates: filtered, secret_keys });
     },
     onSuccess: async () => {
       toast.success('Settings saved');

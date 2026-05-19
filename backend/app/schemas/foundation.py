@@ -23,6 +23,7 @@ class SettingUpdate(BaseModel):
 
 class SettingBulkUpdate(BaseModel):
     updates: dict[str, str]
+    secret_keys: list[str] = Field(default_factory=list)
 
 
 class NotificationRead(ORMModel):

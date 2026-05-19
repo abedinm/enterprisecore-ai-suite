@@ -13,6 +13,7 @@ from app.db.base import Base
 from app.db.session import SessionLocal, engine
 from app.models import *  # noqa: F403
 from app.models.finance import CurrencyRate, ExpenseCategory, TaxRate
+from app.models.hr import OrgUnit
 from app.models.user import Notification, Setting, User, UserRole
 
 MODULE_CATALOG = [
@@ -110,6 +111,12 @@ def init_db() -> None:
                 TaxRate.jurisdiction == jurisdiction, TaxRate.name == name
             )):
                 db.add(TaxRate(jurisdiction=jurisdiction, name=name, rate=rate))
+
+        # Seed default org units (flat structure to start)
+        for org_name in ["Engineering", "Sales", "Marketing", "Finance",
+                         "HR", "Operations", "Support"]:
+            if not db.scalar(select(OrgUnit).where(OrgUnit.name == org_name)):
+                db.add(OrgUnit(name=org_name))
 
         today = date.today()
         for base, quote, rate in OFFLINE_CURRENCY_RATES:

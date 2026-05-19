@@ -1,14 +1,20 @@
-"""Authentication endpoints — register, login, refresh, logout, current user."""
-from __future__ import annotations
+"""Authentication endpoints — register, login, refresh, logout, current user.
 
+NOTE: `from __future__ import annotations` is intentionally *not* used here.
+slowapi 0.1.9's @limiter.limit decorator wraps the function with a sync trampoline
+that breaks FastAPI's signature introspection when annotations are strings, leading
+to "missing query param payload" errors. Real runtime annotations sidestep this.
+"""
 from datetime import datetime, timezone
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Body, Depends, Request, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
 from app.core.exceptions import AuthenticationError, ConflictError
+from app.core.rate_limit import limiter
 from app.core.security import (
     create_access_token,
     create_refresh_token,
@@ -53,7 +59,12 @@ def _client_ip(request: Request) -> str | None:
 
 
 @router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
-def register(payload: UserCreate, request: Request, db: Session = Depends(get_db)) -> User:
+@limiter.limit("10/minute")
+def register(
+    request: Request,
+    payload: Annotated[UserCreate, Body()],
+    db: Annotated[Session, Depends(get_db)],
+) -> User:
     email = str(payload.email).lower().strip()
     if db.scalar(select(User).where(User.email == email)):
         raise ConflictError("A user with this email already exists")
@@ -81,7 +92,12 @@ def register(payload: UserCreate, request: Request, db: Session = Depends(get_db
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(payload: LoginRequest, request: Request, db: Session = Depends(get_db)) -> TokenResponse:
+@limiter.limit("10/minute")
+def login(
+    request: Request,
+    payload: Annotated[LoginRequest, Body()],
+    db: Annotated[Session, Depends(get_db)],
+) -> TokenResponse:
     email = str(payload.email).lower().strip()
     user = db.scalar(select(User).where(User.email == email))
     success = bool(user and user.is_active and verify_password(payload.password, user.password_hash))

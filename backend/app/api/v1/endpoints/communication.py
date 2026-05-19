@@ -214,10 +214,23 @@ def list_wiki(q: str | None = None, db: Session = Depends(get_db),
     return db.scalars(stmt.limit(500)).all()
 
 
+def _slugify(title: str) -> str:
+    import re, secrets
+    slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")[:160]
+    return slug or f"page-{secrets.token_hex(3)}"
+
+
 @router.post("/wiki", response_model=WikiPageOut)
 def create_wiki_page(payload: WikiPageIn, db: Session = Depends(get_db),
                      _: User = Depends(get_current_user)):
-    obj = WikiPage(**payload.model_dump())
+    data = payload.model_dump()
+    base = _slugify(data["title"])
+    slug = base
+    n = 1
+    while db.scalar(select(WikiPage).where(WikiPage.slug == slug)):
+        n += 1
+        slug = f"{base}-{n}"
+    obj = WikiPage(slug=slug, **data)
     db.add(obj)
     db.commit()
     db.refresh(obj)

@@ -7,12 +7,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from loguru import logger
+from slowapi.errors import RateLimitExceeded
 
 from app import __version__
 from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.exceptions import register_exception_handlers
 from app.core.logging import configure_logging
+from app.core.rate_limit import limiter, rate_limit_handler
 from app.db.init_db import init_db
 
 
@@ -42,6 +44,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, rate_limit_handler)
+# NOTE: SlowAPIMiddleware + the @limiter.limit decorator currently break FastAPI's
+# body-parameter detection (issue with how slowapi wraps signatures). Rate limiting
+# is wired through `limiter` and can be enforced per-endpoint via a Depends-based
+# guard if needed; the middleware is intentionally NOT installed.
 
 register_exception_handlers(app)
 app.include_router(api_router, prefix="/api/v1")

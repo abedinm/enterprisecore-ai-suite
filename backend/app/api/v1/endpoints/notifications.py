@@ -6,6 +6,7 @@ from sqlalchemy import func, or_, select, update
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, require_roles
+from app.core.exceptions import NotFoundError
 from app.db.session import get_db
 from app.models.user import Notification, User, UserRole
 from app.schemas.foundation import NotificationCounts, NotificationCreate, NotificationRead
@@ -71,12 +72,12 @@ def mark_read(
     current_user: User = Depends(get_current_user),
 ):
     item = db.get(Notification, notification_id)
-    if item and (item.user_id == current_user.id or item.user_id is None):
-        item.is_read = True
-        db.commit()
-        db.refresh(item)
-        return item
-    return Notification(id=notification_id, title="", body="", level="info", is_read=False)
+    if not item or (item.user_id is not None and item.user_id != current_user.id):
+        raise NotFoundError("Notification not found")
+    item.is_read = True
+    db.commit()
+    db.refresh(item)
+    return item
 
 
 @router.post("/read-all", response_model=NotificationCounts)

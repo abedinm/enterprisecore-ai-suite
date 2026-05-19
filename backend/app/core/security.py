@@ -1,10 +1,12 @@
 """Authentication, password hashing, JWT, and lightweight encryption helpers."""
 from __future__ import annotations
 
+import base64
 import hashlib
 import hmac
 import uuid
 from datetime import datetime, timedelta, timezone
+from functools import lru_cache
 from typing import Any
 
 from cryptography.fernet import Fernet, InvalidToken
@@ -65,11 +67,22 @@ def decode_token(token: str, expected_type: str = "access") -> dict[str, Any]:
     return payload
 
 
+@lru_cache(maxsize=1)
 def _fernet() -> Fernet:
-    key = settings.encryption_key
-    if not key:
-        key = Fernet.generate_key().decode()
-    return Fernet(key.encode() if isinstance(key, str) else key)
+    """Return a Fernet instance with a STABLE key.
+
+    If ``ENCRYPTION_KEY`` is unset we derive a deterministic key from
+    ``SECRET_KEY`` so that data encrypted across restarts can still be read.
+    Previously this function generated a new random key on every call when
+    ``ENCRYPTION_KEY`` was empty, which made every decrypt fail.
+    """
+    raw = settings.encryption_key
+    if raw:
+        key = raw.encode() if isinstance(raw, str) else raw
+    else:
+        digest = hashlib.sha256(settings.secret_key.encode("utf-8")).digest()
+        key = base64.urlsafe_b64encode(digest)
+    return Fernet(key)
 
 
 def hash_refresh_token(token: str) -> str:
