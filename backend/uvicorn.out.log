@@ -1,9 +1,0 @@
-[32m2026-05-20 00:31:36.136[0m | [1mINFO   [0m | [36mapp.main[0m:[36mlifespan[0m:[36m25[0m - [1mStarting EnterpriseCore AI Suite v0.1.0 (development@sqlite)[0m
-[32m2026-05-20 00:31:36.276[0m | [1mINFO   [0m | [36mlogging[0m:[36mcallHandlers[0m:[36m1737[0m - [1msetup plugin alembic.autogenerate.schemas[0m
-[32m2026-05-20 00:31:36.277[0m | [1mINFO   [0m | [36mlogging[0m:[36mcallHandlers[0m:[36m1737[0m - [1msetup plugin alembic.autogenerate.tables[0m
-[32m2026-05-20 00:31:36.279[0m | [1mINFO   [0m | [36mlogging[0m:[36mcallHandlers[0m:[36m1737[0m - [1msetup plugin alembic.autogenerate.types[0m
-[32m2026-05-20 00:31:36.279[0m | [1mINFO   [0m | [36mlogging[0m:[36mcallHandlers[0m:[36m1737[0m - [1msetup plugin alembic.autogenerate.constraints[0m
-[32m2026-05-20 00:31:36.280[0m | [1mINFO   [0m | [36mlogging[0m:[36mcallHandlers[0m:[36m1737[0m - [1msetup plugin alembic.autogenerate.defaults[0m
-[32m2026-05-20 00:31:36.280[0m | [1mINFO   [0m | [36mlogging[0m:[36mcallHandlers[0m:[36m1737[0m - [1msetup plugin alembic.autogenerate.comments[0m
-[32m2026-05-20 00:31:36.503[0m | [1mINFO   [0m | [36mapp.db.init_db[0m:[36mmigrate_db[0m:[36m54[0m - [1mMigrations applied; DB is at head[0m
-[32m2026-05-20 00:31:36.573[0m | [1mINFO   [0m | [36mapp.main[0m:[36mlifespan[0m:[36m29[0m - [1mShutdown complete[0m

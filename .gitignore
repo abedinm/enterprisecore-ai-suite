@@ -51,3 +51,7 @@ electron/resources/backend/
 *.swp
 .DS_Store
 Thumbs.db
+
+# Server runtime logs
+backend/uvicorn.*.log
+*.tsbuildinfo
