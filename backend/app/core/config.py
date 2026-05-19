@@ -41,6 +41,9 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     ollama_host: str = "http://127.0.0.1:11434"
     ai_default_provider: Literal["anthropic", "openai", "ollama"] = "anthropic"
+    # Hard ceiling on each user's paid-AI spending in any rolling 24-hour
+    # window. Ollama (local) is exempt. 0 disables the limit.
+    ai_daily_usd_limit_per_user: float = 5.0
 
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173,app://./"
 

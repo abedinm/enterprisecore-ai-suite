@@ -8,7 +8,7 @@ from __future__ import annotations
 import json
 import time
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
 from loguru import logger
@@ -179,6 +179,38 @@ def call_ollama(messages: list[AiMessage], *, model: str | None = None,
     )
 
 
+def user_daily_spend_usd(db: Session, user_id: str) -> Decimal:
+    """Sum of cost_usd from this user's AI calls in the last 24h. Used by the
+    cost-limit guard. Ollama records cost 0, so they don't count against quota."""
+    from sqlalchemy import func, select as _sel
+    since = datetime.now(timezone.utc) - timedelta(hours=24)
+    total = db.scalar(
+        _sel(func.coalesce(func.sum(AiUsageRecord.cost_usd), 0))
+        .where(AiUsageRecord.user_id == user_id, AiUsageRecord.occurred_at >= since)
+    )
+    return Decimal(total or 0)
+
+
+def _check_spending_limit(db: Session | None, user_id: str | None, chosen: str) -> None:
+    """Raise AppError(429) when the user's last-24h spend on PAID providers
+    has reached settings.ai_daily_usd_limit_per_user. Ollama is exempt."""
+    if db is None or user_id is None:
+        return  # no DB → no tracking → no limit (test paths typically)
+    limit = settings.ai_daily_usd_limit_per_user
+    if limit <= 0 or chosen == "ollama":
+        return
+    spent = user_daily_spend_usd(db, user_id)
+    if spent >= Decimal(str(limit)):
+        raise AppError(
+            f"Daily AI spending limit reached (${spent:.4f} of ${limit:.2f}). "
+            f"Reset rolls over 24h after the first charge. "
+            f"Switch provider to ollama for free local inference, or raise "
+            f"AI_DAILY_USD_LIMIT_PER_USER.",
+            code="ai_spend_limit",
+            status_code=429,
+        )
+
+
 def call(messages: list[AiMessage], *, provider: str | None = None, model: str | None = None,
          max_tokens: int = 1024, temperature: float = 0.7,
          feature: str = "general", db: Session | None = None,
@@ -192,6 +224,9 @@ def call(messages: list[AiMessage], *, provider: str | None = None, model: str |
             if available.get(fb):
                 chosen = fb
                 break
+    # Per-user spend cap (free, local Ollama is exempt). Check before the call
+    # so we don't pay for a request and then refuse to deliver it.
+    _check_spending_limit(db, user_id, chosen)
     try:
         if chosen == "anthropic":
             result = call_anthropic(messages, model=model, max_tokens=max_tokens,
