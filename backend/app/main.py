@@ -17,6 +17,7 @@ from app.core.license_key import warn_on_startup as warn_on_license_startup
 from app.core.logging import configure_logging
 from app.core.rate_limit import limiter, rate_limit_handler
 from app.db.init_db import init_db
+from app.services.housekeeping import run_now_safely as run_housekeeping, start_scheduler, stop_scheduler
 from app.services.search_index import register_search_listeners
 
 
@@ -27,7 +28,10 @@ async def lifespan(_: FastAPI):
     init_db()
     register_search_listeners()
     warn_on_license_startup()
+    run_housekeeping()
+    start_scheduler()
     yield
+    stop_scheduler()
     logger.info("Shutdown complete")
 
 

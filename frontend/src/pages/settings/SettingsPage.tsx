@@ -1,7 +1,7 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { KeyRound, Languages, Monitor, Moon, Palette, SaveAll, Settings2, ShieldAlert, Sun, UserCog, UsersRound } from 'lucide-react';
+import { ImagePlus, KeyRound, Languages, Monitor, Moon, Palette, SaveAll, Settings2, ShieldAlert, Sun, Trash2, UserCog, UserCircle2, UsersRound } from 'lucide-react';
 import { api, type User, type UserRole } from '../../lib/api';
 import { useAuthStore } from '../../store/auth';
 import { useThemeStore, type Theme } from '../../store/theme';
@@ -164,6 +164,97 @@ function RolesPanel() {
   );
 }
 
+const ACCEPTED_AVATAR_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
+const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
+
+function AvatarSection() {
+  const { user, uploadAvatar, deleteAvatar } = useAuthStore();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function handlePick(file: File | null | undefined) {
+    if (!file) return;
+    if (!ACCEPTED_AVATAR_TYPES.includes(file.type)) {
+      toast.error('Avatar must be a PNG, JPEG, or WEBP image.');
+      return;
+    }
+    if (file.size > MAX_AVATAR_BYTES) {
+      toast.error('Avatar is too large (max 2 MB).');
+      return;
+    }
+    setBusy(true);
+    try {
+      await uploadAvatar(file);
+      toast.success('Avatar updated');
+    } catch (err: any) {
+      toast.error(err?.response?.data?.detail ?? 'Could not upload avatar');
+    } finally {
+      setBusy(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  }
+
+  async function handleRemove() {
+    setBusy(true);
+    try {
+      await deleteAvatar();
+      toast.success('Avatar removed');
+    } catch {
+      toast.error('Could not remove avatar');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-4 rounded-xl border border-border bg-surface p-4">
+      <div className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-full border border-border bg-surface-muted">
+        {user?.avatar_url ? (
+          <img
+            key={user.avatar_url}
+            src={user.avatar_url}
+            alt={user.full_name}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <UserCircle2 size={48} className="text-ink-subtle" />
+        )}
+      </div>
+      <div className="flex-1">
+        <p className="text-sm font-medium">Profile picture</p>
+        <p className="text-xs text-ink-muted">PNG / JPEG / WEBP, up to 2 MB. Stripped of EXIF metadata and downscaled to 512×512.</p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <button
+            type="button"
+            className="ec-btn-secondary"
+            disabled={busy}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <ImagePlus size={14} /> {user?.avatar_url ? 'Replace' : 'Upload'}
+          </button>
+          {user?.avatar_url && (
+            <button
+              type="button"
+              className="ec-btn-ghost text-rose-600"
+              disabled={busy}
+              onClick={handleRemove}
+            >
+              <Trash2 size={14} /> Remove
+            </button>
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept={ACCEPTED_AVATAR_TYPES.join(',')}
+            className="hidden"
+            onChange={(e) => handlePick(e.target.files?.[0])}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ProfilePanel() {
   const { user, updateProfile } = useAuthStore();
   const [full_name, setFullName] = useState(user?.full_name ?? '');
@@ -196,6 +287,7 @@ function ProfilePanel() {
         <UserCog size={18} />
         <h2 className="text-lg font-semibold">Profile</h2>
       </div>
+      <AvatarSection />
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="ec-label" htmlFor="full_name">Full name</label>

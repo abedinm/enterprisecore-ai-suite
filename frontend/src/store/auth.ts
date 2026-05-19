@@ -19,6 +19,8 @@ type AuthState = {
   loadMe: () => Promise<void>;
   refresh: () => Promise<void>;
   updateProfile: (patch: Partial<Pick<User, 'full_name' | 'department' | 'locale' | 'theme' | 'avatar_url'>>) => Promise<void>;
+  uploadAvatar: (file: File) => Promise<void>;
+  deleteAvatar: () => Promise<void>;
   changePassword: (current: string, next: string) => Promise<void>;
   logout: (callBackend?: boolean) => Promise<void>;
   hasRole: (...roles: UserRole[]) => boolean;
@@ -59,6 +61,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   async updateProfile(patch) {
     const { data } = await api.patch<User>('/auth/me', patch);
     set({ user: data });
+  },
+  async uploadAvatar(file) {
+    const form = new FormData();
+    form.append('file', file);
+    const { data } = await api.post<User>('/auth/me/avatar', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    set({ user: data });
+  },
+  async deleteAvatar() {
+    await api.delete('/auth/me/avatar');
+    const user = get().user;
+    if (user) set({ user: { ...user, avatar_url: null } });
   },
   async changePassword(current, next) {
     await api.post('/auth/me/password', { current_password: current, new_password: next });

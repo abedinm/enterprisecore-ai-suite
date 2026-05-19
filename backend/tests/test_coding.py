@@ -268,12 +268,6 @@ def test_api_request_save_and_execute(client, auth_headers):
     assert dl.status_code == 204
 
 
-def test_api_tester_execute_against_httpbin_replacement(client, auth_headers, httpserver):
-    """Use pytest-httpserver if available, else fall back to a known-bad URL
-    and assert the wrapper returns a meaningful error rather than crashing."""
-    pass  # pragma: no cover — replaced by test_api_tester_handles_unreachable below
-
-
 def test_api_tester_handles_unreachable(client, auth_headers):
     r = client.post("/api/v1/coding/api-tester/execute", headers=auth_headers, json={
         "method": "GET",
