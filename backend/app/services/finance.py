@@ -164,7 +164,11 @@ def find_rate(db: Session, base: str, quote: str, as_of: date | None = None) -> 
     stmt = (
         select(CurrencyRate)
         .where(CurrencyRate.base_currency == base, CurrencyRate.quote_currency == quote)
-        .order_by(CurrencyRate.effective_date.desc())
+        # Tie-break on created_at DESC so that when two rates share an
+        # effective_date the most-recently-recorded one wins (a correction
+        # supersedes the earlier number). Without this secondary ordering the
+        # test suite was flaky on SQLite (implementation-defined row order).
+        .order_by(CurrencyRate.effective_date.desc(), CurrencyRate.created_at.desc())
         .limit(1)
     )
     if as_of:
@@ -175,7 +179,11 @@ def find_rate(db: Session, base: str, quote: str, as_of: date | None = None) -> 
     inv = db.scalar(
         select(CurrencyRate)
         .where(CurrencyRate.base_currency == quote, CurrencyRate.quote_currency == base)
-        .order_by(CurrencyRate.effective_date.desc())
+        # Tie-break on created_at DESC so that when two rates share an
+        # effective_date the most-recently-recorded one wins (a correction
+        # supersedes the earlier number). Without this secondary ordering the
+        # test suite was flaky on SQLite (implementation-defined row order).
+        .order_by(CurrencyRate.effective_date.desc(), CurrencyRate.created_at.desc())
         .limit(1)
     )
     if inv and inv.rate > 0:
