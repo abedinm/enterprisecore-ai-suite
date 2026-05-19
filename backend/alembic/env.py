@@ -14,7 +14,10 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-config.set_main_option("sqlalchemy.url", settings.sqlalchemy_url)
+# Honor whatever URL the caller already set on the Config (e.g. tests pointing
+# at a fresh DB), and only fall back to the app settings if none is present.
+if not config.get_main_option("sqlalchemy.url"):
+    config.set_main_option("sqlalchemy.url", settings.sqlalchemy_url)
 
 target_metadata = Base.metadata
 

@@ -1,11 +1,13 @@
-"""Database bootstrap and seed data."""
+"""Database bootstrap, migrations runner, and seed data."""
 from __future__ import annotations
 
 import json
 from datetime import date
 from decimal import Decimal
+from pathlib import Path
 
-from sqlalchemy import select
+from loguru import logger
+from sqlalchemy import inspect, select
 
 from app.core.config import settings
 from app.core.security import hash_password
@@ -15,6 +17,41 @@ from app.models import *  # noqa: F403
 from app.models.finance import CurrencyRate, ExpenseCategory, TaxRate
 from app.models.hr import OrgUnit
 from app.models.user import Notification, Setting, User, UserRole
+
+BACKEND_ROOT = Path(__file__).resolve().parents[2]
+ALEMBIC_INI = BACKEND_ROOT / "alembic.ini"
+
+
+def _alembic_config():
+    """Build an Alembic Config that points at the runtime SQLAlchemy URL."""
+    from alembic.config import Config
+    cfg = Config(str(ALEMBIC_INI))
+    cfg.set_main_option("script_location", str(BACKEND_ROOT / "alembic"))
+    cfg.set_main_option("sqlalchemy.url", settings.sqlalchemy_url)
+    return cfg
+
+
+def migrate_db() -> None:
+    """Bring the schema up to head.
+
+    * Fresh database → ``alembic upgrade head`` creates every table AND stamps
+      the version row so subsequent ``alembic upgrade head`` calls only apply
+      new migrations.
+    * Existing database that was created with ``Base.metadata.create_all`` (no
+      ``alembic_version`` table) → we stamp it at ``head`` first so alembic
+      knows the current state, then proceed.
+    * Existing database with an alembic version → straight upgrade.
+    """
+    from alembic import command
+
+    cfg = _alembic_config()
+    has_version_table = inspect(engine).has_table("alembic_version")
+    users_table_exists = inspect(engine).has_table("users")
+    if users_table_exists and not has_version_table:
+        logger.info("DB has tables but no alembic_version — stamping at head")
+        command.stamp(cfg, "head")
+    command.upgrade(cfg, "head")
+    logger.info("Migrations applied; DB is at head")
 
 MODULE_CATALOG = [
     {"group": "Foundation", "items": ["Authentication", "Roles", "Settings", "Theme", "Offline sync", "Notifications", "Search", "Dashboard"]},
@@ -59,7 +96,8 @@ OFFLINE_CURRENCY_RATES: list[tuple[str, str, Decimal]] = [
 
 
 def init_db() -> None:
-    Base.metadata.create_all(bind=engine)
+    """Run migrations to head, then seed first-run data (admin, settings, etc.)."""
+    migrate_db()
     with SessionLocal() as db:
         admin = db.scalar(select(User).where(User.email == "admin@local"))
         if not admin:

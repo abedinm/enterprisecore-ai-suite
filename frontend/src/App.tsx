@@ -2,12 +2,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { AppShell } from './components/layout/AppShell';
 import { LoginPage } from './pages/auth/LoginPage';
 import { RegisterPage } from './pages/auth/RegisterPage';
 import { DashboardPage } from './pages/dashboard/DashboardPage';
 import { FinancePage } from './pages/finance/FinancePage';
 import { HRPage } from './pages/hr/HRPage';
+import { CRMPage } from './pages/crm/CRMPage';
 import { ProjectsPage } from './pages/projects/ProjectsPage';
 import { InventoryPage } from './pages/inventory/InventoryPage';
 import { CodingPage } from './pages/coding/CodingPage';
@@ -62,31 +64,34 @@ export function App() {
   }, [apply]);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<PublicOnly><LoginPage /></PublicOnly>} />
-          <Route path="/register" element={<PublicOnly><RegisterPage /></PublicOnly>} />
-          <Route path="/" element={<Protected><AppShell /></Protected>}>
-            <Route index element={<DashboardPage />} />
-            <Route path="settings" element={<SettingsPage />} />
-            <Route path="search" element={<SearchPage />} />
-            <Route path="finance" element={<FinancePage />} />
-            <Route path="hr" element={<HRPage />} />
-            <Route path="projects" element={<ProjectsPage />} />
-            <Route path="inventory" element={<InventoryPage />} />
-            <Route path="coding" element={<CodingPage />} />
-            <Route path=":module" element={<ModulePage />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          className: 'text-sm',
-          style: { background: 'rgb(var(--color-surface-elevated))', color: 'rgb(var(--color-ink))', border: '1px solid rgb(var(--color-border))' },
-        }}
-      />
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<PublicOnly><LoginPage /></PublicOnly>} />
+            <Route path="/register" element={<PublicOnly><RegisterPage /></PublicOnly>} />
+            <Route path="/" element={<Protected><AppShell /></Protected>}>
+              <Route index element={<ErrorBoundary><DashboardPage /></ErrorBoundary>} />
+              <Route path="settings" element={<ErrorBoundary><SettingsPage /></ErrorBoundary>} />
+              <Route path="search" element={<ErrorBoundary><SearchPage /></ErrorBoundary>} />
+              <Route path="finance" element={<ErrorBoundary><FinancePage /></ErrorBoundary>} />
+              <Route path="hr" element={<ErrorBoundary><HRPage /></ErrorBoundary>} />
+              <Route path="crm" element={<ErrorBoundary><CRMPage /></ErrorBoundary>} />
+              <Route path="projects" element={<ErrorBoundary><ProjectsPage /></ErrorBoundary>} />
+              <Route path="inventory" element={<ErrorBoundary><InventoryPage /></ErrorBoundary>} />
+              <Route path="coding" element={<ErrorBoundary><CodingPage /></ErrorBoundary>} />
+              <Route path=":module" element={<ErrorBoundary><ModulePage /></ErrorBoundary>} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            className: 'text-sm',
+            style: { background: 'rgb(var(--color-surface-elevated))', color: 'rgb(var(--color-ink))', border: '1px solid rgb(var(--color-border))' },
+          }}
+        />
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
