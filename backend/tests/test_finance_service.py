@@ -103,16 +103,19 @@ def test_find_rate_unknown_raises(session_factory):
 
 
 def test_convert_rounds_to_cents(session_factory):
+    # Use ISO-4217 X-prefixed test codes (XCF / XCT) that no other test touches,
+    # so a real-world USD→EUR rate seeded by test_currency_rate_and_convert in the
+    # HTTP-level suite can never shadow this one.
     with session_factory() as db:
-        db.add(CurrencyRate(base_currency="USD", quote_currency="EUR",
+        db.add(CurrencyRate(base_currency="XCF", quote_currency="XCT",
                             rate=Decimal("0.9123"), effective_date=date.today()))
         db.commit()
-        out = fin.convert(db, Decimal("100"), "USD", "EUR")
+        out = fin.convert(db, Decimal("100"), "XCF", "XCT")
         # 100 * 0.9123 = 91.23
         assert out["converted"] == Decimal("91.23")
         assert out["rate"] == Decimal("0.9123")
-        assert out["from_currency"] == "USD"
-        assert out["to_currency"] == "EUR"
+        assert out["from_currency"] == "XCF"
+        assert out["to_currency"] == "XCT"
 
 
 # ---- multi-currency summary ---------------------------------------------
