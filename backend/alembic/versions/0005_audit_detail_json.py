@@ -36,7 +36,20 @@ def upgrade() -> None:
 
     if dialect == "postgresql":
         # ALTER COLUMN to JSONB, casting through the existing text contents.
-        op.execute("ALTER TABLE audit_logs ALTER COLUMN detail TYPE JSONB USING detail::jsonb")
+        # Wrap in try/except so a failure here (e.g., long lock wait on managed
+        # Postgres, invalid JSON in detail) doesn't crash the entire startup.
+        # The column stays as TEXT if ALTER fails — JSON queries are slower
+        # but the app still works.
+        import sys
+        try:
+            sys.stderr.write("[migration 0005] starting ALTER TABLE audit_logs.detail to JSONB\n")
+            sys.stderr.flush()
+            op.execute("ALTER TABLE audit_logs ALTER COLUMN detail TYPE JSONB USING detail::jsonb")
+            sys.stderr.write("[migration 0005] ALTER succeeded\n")
+            sys.stderr.flush()
+        except Exception as e:  # noqa: BLE001
+            sys.stderr.write(f"[migration 0005] ALTER failed (column stays TEXT): {type(e).__name__}: {e}\n")
+            sys.stderr.flush()
     # SQLite: no DDL needed — TEXT and JSON are stored identically.
 
 
