@@ -13,7 +13,7 @@ NPM       := npm --prefix frontend
 PYTEST    := $(PY) -m pytest
 ALEMBIC   := $(PY) -m alembic
 
-.PHONY: help dev backend frontend test test-backend test-frontend lint lint-backend lint-frontend build migrate seed reindex db-shell install install-backend install-frontend clean check
+.PHONY: help dev backend frontend test test-backend test-frontend lint lint-backend lint-frontend build migrate seed reindex db-shell install install-backend install-frontend install-hooks hooks clean check
 
 help:  ## Show this help
 	@echo "EnterpriseCore AI Suite — make targets"
@@ -67,13 +67,20 @@ db-shell:  ## Open a sqlite3 shell against the dev DB
 	sqlite3 backend/storage/enterprisecore.db
 
 # ----- install ----------------------------------------------------------
-install: install-backend install-frontend  ## Install all deps
+install: install-backend install-frontend install-hooks  ## Install all deps + git hooks
 
 install-backend:  ## Create venv + install backend deps
 	cd backend && python -m venv .venv && ./.venv/Scripts/python.exe -m pip install --upgrade pip && ./.venv/Scripts/python.exe -m pip install -r requirements.txt
 
 install-frontend:  ## Install frontend deps
 	$(NPM) install
+
+install-hooks:  ## Install pre-commit hooks
+	$(PY) -m pip install pre-commit --quiet
+	pre-commit install
+
+hooks:  ## Run pre-commit against all files (one-off)
+	pre-commit run --all-files || true
 
 # ----- check ------------------------------------------------------------
 check: lint test  ## Lint + test everything (CI gate)

@@ -155,6 +155,27 @@ class UsageSummary(BaseModel):
     by_provider: dict[str, dict]
 
 
+class DailySpendPoint(BaseModel):
+    date: str           # "YYYY-MM-DD"
+    cost_usd: Decimal
+    calls: int
+
+
+class MySpendSummary(BaseModel):
+    """Per-user spend summary with daily limit context."""
+    user_id: str
+    daily_spend_usd: Decimal        # last 24 hours
+    daily_limit_usd: Decimal        # 0 = no limit
+    limit_pct: Decimal              # 0-1 progress, capped at 1
+    calls_24h: int
+    tokens_24h: int
+    cost_30d: Decimal               # last 30 days
+    calls_30d: int
+    tokens_30d: int
+    by_provider_30d: dict[str, dict]
+    timeline: list[DailySpendPoint] # daily spend for last 30 days
+
+
 class ChatbotIn(BaseModel):
     name: str
     description: str | None = None

@@ -5,7 +5,10 @@ import secrets
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 
+import json
+
 from fastapi import APIRouter, Depends
+from fastapi.responses import StreamingResponse
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -20,10 +23,11 @@ from app.models.hr import Employee
 from app.models.user import User, UserRole, SearchIndex
 from app.schemas.ai import (
     AiMessageOut, ChatRequestIn, ChatResponse, ChatbotIn, ChatbotOut,
-    ContractRiskIn, ContractRiskOut, ConversationOut, FinancialNarrationIn,
-    HRInsightsIn, InvoiceAnalysisIn, MeetingSummariseIn, MeetingSummaryOut,
-    ProviderStatus, RegexExplainIn, SentimentIn, SentimentOut, SmartSearchIn,
-    SmartSearchOut, UsageEntry, UsageSummary, WriteRequestIn, WriteResponseOut,
+    ContractRiskIn, ContractRiskOut, ConversationOut, DailySpendPoint,
+    FinancialNarrationIn, HRInsightsIn, InvoiceAnalysisIn, MeetingSummariseIn,
+    MeetingSummaryOut, MySpendSummary, ProviderStatus, RegexExplainIn,
+    SentimentIn, SentimentOut, SmartSearchIn, SmartSearchOut, UsageEntry,
+    UsageSummary, WriteRequestIn, WriteResponseOut,
 )
 from app.services import ai as ai_svc
 from app.services import finance as fin_svc
@@ -64,6 +68,76 @@ def delete_conversation(cid: str, db: Session = Depends(get_db),
     if conv and conv.user_id == current.id:
         db.delete(conv)
         db.commit()
+
+
+def _sse(event: str, payload: dict) -> bytes:
+    return f"event: {event}\ndata: {json.dumps(payload, default=str)}\n\n".encode("utf-8")
+
+
+@router.post("/chat/stream")
+def chat_stream(payload: ChatRequestIn, db: Session = Depends(get_db),
+                current: User = Depends(get_current_user)):
+    """Server-sent events variant of /chat. Streams tokens incrementally
+    and persists the conversation + assistant message after the stream ends."""
+    messages = [ai_svc.AiMessage(role=m.role, content=m.content) for m in payload.messages]
+    if payload.system:
+        messages = [ai_svc.AiMessage(role="system", content=payload.system), *messages]
+
+    if payload.conversation_id:
+        conv = db.get(AiConversation, payload.conversation_id)
+        if not conv or conv.user_id != current.id:
+            raise NotFoundError("Conversation not found")
+    else:
+        title = payload.messages[0].content[:80] if payload.messages else "New conversation"
+        conv = AiConversation(user_id=current.id, title=title,
+                              provider=payload.provider or "ollama",
+                              model=payload.model)
+        db.add(conv)
+        db.flush()
+    for m in payload.messages:
+        db.add(AiMessage(conversation_id=conv.id, role=m.role, content=m.content,
+                         tokens_in=0, tokens_out=0))
+    db.commit()
+
+    def event_stream():
+        full_parts: list[str] = []
+        final_meta: dict = {}
+        try:
+            for ev_type, ev_payload in ai_svc.stream_call(
+                messages=messages,
+                provider=payload.provider, model=payload.model,
+                max_tokens=payload.max_tokens, temperature=payload.temperature,
+                feature=payload.feature, db=db, user_id=current.id,
+            ):
+                if ev_type == "token":
+                    full_parts.append(ev_payload.get("text", ""))
+                    yield _sse("token", ev_payload)
+                elif ev_type == "usage":
+                    final_meta = ev_payload
+                    yield _sse("usage", {**ev_payload, "conversation_id": conv.id})
+                elif ev_type == "error":
+                    yield _sse("error", ev_payload)
+        except Exception as e:  # pragma: no cover
+            yield _sse("error", {"detail": str(e)})
+
+        try:
+            db.add(AiMessage(
+                conversation_id=conv.id, role="assistant",
+                content="".join(full_parts),
+                tokens_in=int(final_meta.get("tokens_in", 0)),
+                tokens_out=int(final_meta.get("tokens_out", 0)),
+            ))
+            conv.updated_at = datetime.now(timezone.utc)
+            db.commit()
+        except Exception:
+            db.rollback()
+        yield _sse("done", {"conversation_id": conv.id})
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @router.post("/chat", response_model=ChatResponse)
@@ -338,6 +412,74 @@ def usage_summary(days: int = 30, db: Session = Depends(get_db),
     return UsageSummary(
         total_calls=total_calls, total_tokens_in=tin, total_tokens_out=tout,
         total_cost_usd=cost, by_feature=by_feature, by_provider=by_provider,
+    )
+
+
+@router.get("/usage/my-summary", response_model=MySpendSummary)
+def my_spend_summary(db: Session = Depends(get_db),
+                     current: User = Depends(get_current_user)) -> MySpendSummary:
+    """Return the current user's own spend data with daily-limit context."""
+    from app.core.config import settings as cfg
+    now = datetime.now(timezone.utc)
+    since_24h = now - timedelta(hours=24)
+    since_30d = now - timedelta(days=30)
+
+    rows_24h = db.scalars(
+        select(AiUsageRecord).where(
+            AiUsageRecord.user_id == current.id,
+            AiUsageRecord.occurred_at >= since_24h,
+        )
+    ).all()
+    rows_30d = db.scalars(
+        select(AiUsageRecord).where(
+            AiUsageRecord.user_id == current.id,
+            AiUsageRecord.occurred_at >= since_30d,
+        )
+    ).all()
+
+    daily_spend = sum((r.cost_usd for r in rows_24h), Decimal("0"))
+    limit = Decimal(str(cfg.ai_daily_usd_limit_per_user))
+    limit_pct = (daily_spend / limit).quantize(Decimal("0.0001")) if limit > 0 else Decimal("0")
+    limit_pct = min(limit_pct, Decimal("1"))
+
+    cost_30d = sum((r.cost_usd for r in rows_30d), Decimal("0"))
+
+    # per-provider breakdown for 30d
+    by_provider: dict[str, dict] = {}
+    for r in rows_30d:
+        entry = by_provider.setdefault(r.provider, {
+            "calls": 0, "tokens_in": 0, "tokens_out": 0, "cost_usd": Decimal("0"),
+        })
+        entry["calls"] += 1
+        entry["tokens_in"] += r.tokens_in
+        entry["tokens_out"] += r.tokens_out
+        entry["cost_usd"] += r.cost_usd
+
+    # day-by-day timeline for last 30 days
+    day_buckets: dict[str, dict] = {}
+    for r in rows_30d:
+        day_str = r.occurred_at.astimezone(timezone.utc).strftime("%Y-%m-%d")
+        bucket = day_buckets.setdefault(day_str, {"cost_usd": Decimal("0"), "calls": 0})
+        bucket["cost_usd"] += r.cost_usd
+        bucket["calls"] += 1
+
+    timeline = [
+        DailySpendPoint(date=d, cost_usd=v["cost_usd"], calls=v["calls"])
+        for d, v in sorted(day_buckets.items())
+    ]
+
+    return MySpendSummary(
+        user_id=current.id,
+        daily_spend_usd=daily_spend,
+        daily_limit_usd=limit,
+        limit_pct=limit_pct,
+        calls_24h=len(rows_24h),
+        tokens_24h=sum(r.tokens_in + r.tokens_out for r in rows_24h),
+        cost_30d=cost_30d,
+        calls_30d=len(rows_30d),
+        tokens_30d=sum(r.tokens_in + r.tokens_out for r in rows_30d),
+        by_provider_30d=by_provider,
+        timeline=timeline,
     )
 
 
