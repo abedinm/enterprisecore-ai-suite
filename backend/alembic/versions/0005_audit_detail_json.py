@@ -34,23 +34,14 @@ def upgrade() -> None:
     # accessible as TEXT in raw SQL.
     bind.execute(sa.text("UPDATE audit_logs SET detail = '{}' WHERE detail IS NULL OR detail = ''"))
 
-    if dialect == "postgresql":
-        # ALTER COLUMN to JSONB, casting through the existing text contents.
-        # Wrap in try/except so a failure here (e.g., long lock wait on managed
-        # Postgres, invalid JSON in detail) doesn't crash the entire startup.
-        # The column stays as TEXT if ALTER fails — JSON queries are slower
-        # but the app still works.
-        import sys
-        try:
-            sys.stderr.write("[migration 0005] starting ALTER TABLE audit_logs.detail to JSONB\n")
-            sys.stderr.flush()
-            op.execute("ALTER TABLE audit_logs ALTER COLUMN detail TYPE JSONB USING detail::jsonb")
-            sys.stderr.write("[migration 0005] ALTER succeeded\n")
-            sys.stderr.flush()
-        except Exception as e:  # noqa: BLE001
-            sys.stderr.write(f"[migration 0005] ALTER failed (column stays TEXT): {type(e).__name__}: {e}\n")
-            sys.stderr.flush()
-    # SQLite: no DDL needed — TEXT and JSON are stored identically.
+    # NOTE: Was previously `ALTER TABLE audit_logs ALTER COLUMN detail TYPE JSONB`
+    # on Postgres, but it consistently caused uvicorn lifespan to exit with status 3
+    # on Render's managed Postgres (no visible traceback — likely a transaction-level
+    # error that taints the alembic-managed DDL transaction even when caught in
+    # Python). Leaving detail as TEXT on both backends. JSON queries on Postgres
+    # will use ->> with explicit ::jsonb casts instead of the column type doing it.
+    # SQLite: TEXT and JSON are stored identically anyway.
+    _ = dialect  # silence "unused" — keep the variable for future re-introduction
 
 
 def downgrade() -> None:
