@@ -170,7 +170,12 @@ def hours_ago(n: int) -> datetime:
 # ---------------------------------------------------------------------------
 
 TENANT_NAME = "Atlas Robotics Inc."
-TENANT_DEMO_SLUG = "atlas-demo"
+# Default to the same tenant slug the app boots with — so the bundled
+# ``admin@local`` user (and any user you've created in that tenant) sees the
+# demo data without having to switch tenants. Pass ``--tenant atlas-demo``
+# to create a separate isolated demo tenant if you'd rather keep your data
+# pristine.
+TENANT_DEMO_SLUG = "default"
 
 DEMO_USERS: list[dict] = [
     # name, email, role, department, title
