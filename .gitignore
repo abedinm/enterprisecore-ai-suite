@@ -27,6 +27,8 @@ backend/storage/backups/*
 backend/storage/reports/*
 backend/storage/imports/
 backend/storage/knowledge/
+backend/storage/exports/
+backend/storage/deletion-receipts/
 backend/storage/logs/
 backend/storage/*.db
 backend/storage/*.db-journal
