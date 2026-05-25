@@ -120,11 +120,16 @@ export function DashboardPage() {
 
       <OnboardingChecklist steps={DEFAULT_ONBOARDING_STEPS} />
 
+      {isLoading && (
+        <div role="status" aria-live="polite" className="sr-only">
+          Loading dashboard KPIs
+        </div>
+      )}
       <Stagger className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {isLoading ? (
           [0, 1, 2, 3].map((i) => (
             <FadeIn key={i}>
-              <div className="ec-card-static h-24 p-5">
+              <div className="ec-card-static h-24 p-5" aria-hidden="true">
                 <div className="ec-shimmer h-3 w-20 rounded" />
                 <div className="ec-shimmer mt-3 h-6 w-32 rounded" />
               </div>

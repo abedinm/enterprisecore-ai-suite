@@ -141,9 +141,14 @@ function MySpendSection() {
             <TrendingUp size={14} /> Daily spend (30 d)
           </p>
           {timelineData.length > 0 ? (
-            <div className="h-48">
+            <figure className="h-48 m-0">
+              <figcaption className="sr-only">
+                Bar chart showing daily AI spend over the last 30 days, total
+                {' '}{formatCurrency(timelineData.reduce((a, p) => a + (p.cost ?? 0), 0))}.
+              </figcaption>
               <ResponsiveContainer>
-                <BarChart data={timelineData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                <BarChart data={timelineData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}
+                  role="img" aria-label="Daily AI spend, last 30 days">
                   <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--color-border))" />
                   <XAxis dataKey="date" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
                   <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `$${v.toFixed(3)}`} />
@@ -151,7 +156,7 @@ function MySpendSection() {
                   <Bar dataKey="cost" fill="#4f46e5" radius={[2, 2, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
-            </div>
+            </figure>
           ) : (
             <p className="py-8 text-center text-sm text-ink-muted">No AI calls in the last 30 days.</p>
           )}
@@ -160,9 +165,12 @@ function MySpendSection() {
         <div className="ec-card p-5">
           <p className="mb-2 text-sm font-semibold">By provider (30 d)</p>
           {byProvider.length > 0 ? (
-            <div className="h-48">
+            <figure className="h-48 m-0">
+              <figcaption className="sr-only">
+                Pie chart of AI spend by provider over the last 30 days.
+              </figcaption>
               <ResponsiveContainer>
-                <PieChart>
+                <PieChart role="img" aria-label="AI spend by provider, last 30 days">
                   <Pie data={byProvider} dataKey="value" nameKey="name" outerRadius={60} label>
                     {byProvider.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                   </Pie>
@@ -170,7 +178,7 @@ function MySpendSection() {
                   <Legend wrapperStyle={{ fontSize: 11 }} />
                 </PieChart>
               </ResponsiveContainer>
-            </div>
+            </figure>
           ) : (
             <p className="py-8 text-center text-sm text-ink-muted">No data yet.</p>
           )}

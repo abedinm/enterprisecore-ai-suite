@@ -14,6 +14,7 @@ import { PageTransition } from '../PageTransition';
 import { FirstRunTour } from '../FirstRunTour';
 import { QuickActionFab } from '../QuickActionFab';
 import { ConfirmDialogHost } from '../ConfirmDialog';
+import { LiveAnnouncer } from '../StatusRegion';
 import { AchievementCelebration } from '../gamification/AchievementCelebration';
 import { useGamification } from '../../store/gamification';
 import { useEasterEggs } from '../../hooks/useEasterEggs';
@@ -92,6 +93,7 @@ export function AppShell() {
       <FirstRunTour />
       <QuickActionFab />
       <ConfirmDialogHost />
+      <LiveAnnouncer />
     </div>
   );
 }

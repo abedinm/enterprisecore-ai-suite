@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { CheckCircle2, FlaskConical, Plus, Send, Trash2, X } from 'lucide-react';
+import { CheckCircle2, FlaskConical, Plus, Send, Trash2 } from 'lucide-react';
+import { Modal, ModalHeader, ModalBody, ModalFooter, ModalClose } from '../../components/Modal';
 import {
   academicApi,
   academicDeepApi,
@@ -238,26 +239,18 @@ function LabReportModal({
     },
   });
   return (
-    <div
-      className="fixed inset-0 z-50 grid place-items-center bg-ink/40 p-4 backdrop-blur-sm"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="w-full max-w-lg overflow-hidden rounded-xl border border-border bg-surface-elevated shadow-2xl">
-        <div className="flex items-center justify-between border-b border-border px-5 py-3">
-          <p className="font-semibold">{existingId ? 'Edit report' : 'New lab report'}</p>
-          <button type="button" className="ec-btn-ghost !p-2" onClick={onClose}>
-            <X size={16} />
-          </button>
-        </div>
-        <form
-          className="space-y-3 p-5"
-          onSubmit={(e) => {
-            e.preventDefault();
-            save.mutate();
-          }}
-        >
+    <Modal open onClose={onClose} size="lg" labelledBy="lab-modal-title">
+      <ModalHeader>
+        <p id="lab-modal-title" className="font-semibold">{existingId ? 'Edit report' : 'New lab report'}</p>
+        <ModalClose onClose={onClose} />
+      </ModalHeader>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          save.mutate();
+        }}
+      >
+        <ModalBody className="space-y-3">
           <div>
             <label className="ec-label">Title</label>
             <input
@@ -299,20 +292,20 @@ function LabReportModal({
               </select>
             </div>
           </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <button type="button" className="ec-btn-secondary" onClick={onClose}>
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="ec-btn-primary"
-              disabled={save.isPending || !form.title.trim()}
-            >
-              {save.isPending ? 'Saving…' : existingId ? 'Save' : 'Submit'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        </ModalBody>
+        <ModalFooter>
+          <button type="button" className="ec-btn-secondary" onClick={onClose}>
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="ec-btn-primary"
+            disabled={save.isPending || !form.title.trim()}
+          >
+            {save.isPending ? 'Saving…' : existingId ? 'Save' : 'Submit'}
+          </button>
+        </ModalFooter>
+      </form>
+    </Modal>
   );
 }

@@ -11,7 +11,9 @@
     --color-surface-elevated: 255 255 255;
     --color-ink: 17 24 39;
     --color-ink-muted: 75 85 99;
-    --color-ink-subtle: 156 163 175;
+    /* Bumped from 156 163 175 (3.4:1 on white) to 100 116 139 (4.6:1) to
+       clear WCAG 2.1 AA for normal text. */
+    --color-ink-subtle: 100 116 139;
     --color-border: 229 231 235;
     /* Brand scale defaults to indigo. Swapped at runtime by the palette
        picker in the theme store. */
@@ -32,7 +34,9 @@
     --color-surface-elevated: 24 28 40;
     --color-ink: 240 244 248;
     --color-ink-muted: 174 184 198;
-    --color-ink-subtle: 120 130 145;
+    /* Bumped from 120/130/145 (3.6:1 on surface) to 156/163/175 (5.0:1)
+       so subtle helper text clears WCAG 2.1 AA for normal text. */
+    --color-ink-subtle: 156 163 175;
     --color-border: 40 46 60;
   }
   html, body, #root { height: 100%; }
@@ -119,7 +123,7 @@
            transition-all duration-150 ease-out-expo
            focus:outline-none focus:ring-2 focus:ring-brand-500/40
            active:scale-[0.97]
-           disabled:opacity-50 disabled:cursor-not-allowed;
+           disabled:opacity-70 disabled:cursor-not-allowed;
   }
   .ec-btn-primary { @apply ec-btn bg-brand-600 text-white hover:bg-brand-700; }
   .ec-btn-secondary { @apply ec-btn bg-surface-muted text-ink hover:bg-surface-elevated border border-border; }
@@ -196,6 +200,11 @@
 /* Apple HIG touch target floor for tappable icons in the sidebar/topbar. */
 @media (pointer: coarse) and (max-width: 1023.98px) {
   .ec-tap { min-height: 44px; min-width: 44px; }
+  /* WCAG 2.5.5 — every icon-only ghost button needs at least 44×44 px on
+     touch devices. The class is everywhere; one rule covers ~80 sites. */
+  .ec-btn-ghost { min-height: 44px; min-width: 44px; }
+  /* Edit/Trash/X micro-buttons in tables also need the floor. */
+  button.ec-btn-ghost svg:only-child { margin: 0; }
 }
 
 /* No-overflow safety: a single rogue element can push the body wider than

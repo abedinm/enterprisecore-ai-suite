@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { Plus, Scale, Trash2, Users2, Wand2, X } from 'lucide-react';
+import { Plus, Scale, Trash2, Users2, Wand2 } from 'lucide-react';
+import { Modal, ModalHeader, ModalBody, ModalFooter, ModalClose } from '../../components/Modal';
 import {
   academicApi,
   academicDeepApi,
@@ -143,26 +144,18 @@ function GroupProjectModal({ onClose }: { onClose: () => void }) {
     },
   });
   return (
-    <div
-      className="fixed inset-0 z-50 grid place-items-center bg-ink/40 p-4 backdrop-blur-sm"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="w-full max-w-md overflow-hidden rounded-xl border border-border bg-surface-elevated shadow-2xl">
-        <div className="flex items-center justify-between border-b border-border px-5 py-3">
-          <p className="font-semibold">New group project</p>
-          <button type="button" className="ec-btn-ghost !p-2" onClick={onClose}>
-            <X size={16} />
-          </button>
-        </div>
-        <form
-          className="space-y-3 p-5"
-          onSubmit={(e) => {
-            e.preventDefault();
-            save.mutate();
-          }}
-        >
+    <Modal open onClose={onClose} size="md" labelledBy="gp-modal-title">
+      <ModalHeader>
+        <p id="gp-modal-title" className="font-semibold">New group project</p>
+        <ModalClose onClose={onClose} />
+      </ModalHeader>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          save.mutate();
+        }}
+      >
+        <ModalBody className="space-y-3">
           <div>
             <label className="ec-label">Title</label>
             <input
@@ -191,21 +184,21 @@ function GroupProjectModal({ onClose }: { onClose: () => void }) {
               }
             />
           </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <button type="button" className="ec-btn-secondary" onClick={onClose}>
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="ec-btn-primary"
-              disabled={save.isPending || !form.title.trim()}
-            >
-              {save.isPending ? 'Saving…' : 'Create'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        </ModalBody>
+        <ModalFooter>
+          <button type="button" className="ec-btn-secondary" onClick={onClose}>
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="ec-btn-primary"
+            disabled={save.isPending || !form.title.trim()}
+          >
+            {save.isPending ? 'Saving…' : 'Create'}
+          </button>
+        </ModalFooter>
+      </form>
+    </Modal>
   );
 }
 
@@ -257,20 +250,12 @@ function AssignmentsModal({
   });
 
   return (
-    <div
-      className="fixed inset-0 z-50 grid place-items-center bg-ink/40 p-4 backdrop-blur-sm"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="w-full max-w-md overflow-hidden rounded-xl border border-border bg-surface-elevated shadow-2xl">
-        <div className="flex items-center justify-between border-b border-border px-5 py-3">
-          <p className="font-semibold">Team members</p>
-          <button type="button" className="ec-btn-ghost !p-2" onClick={onClose}>
-            <X size={16} />
-          </button>
-        </div>
-        <div className="space-y-3 p-5">
+    <Modal open onClose={onClose} size="md" labelledBy="team-modal-title">
+      <ModalHeader>
+        <p id="team-modal-title" className="font-semibold">Team members</p>
+        <ModalClose onClose={onClose} />
+      </ModalHeader>
+      <ModalBody className="space-y-3">
           {listQ.isLoading && (
             <p className="text-sm text-ink-muted">Loading…</p>
           )}
@@ -330,9 +315,8 @@ function AssignmentsModal({
               Add
             </button>
           </form>
-        </div>
-      </div>
-    </div>
+      </ModalBody>
+    </Modal>
   );
 }
 

@@ -137,7 +137,7 @@ export function MultiFilePanel({ projectId, tree, theme, onRefreshTree }: Props)
       )}
 
       {picker && (
-        <div className="absolute inset-0 z-30 flex items-start justify-center bg-black/40 p-12" onClick={() => setPicker(null)}>
+        <div role="presentation" className="absolute inset-0 z-30 flex items-start justify-center bg-black/40 p-12" onClick={() => setPicker(null)}>
           <div className="w-full max-w-2xl rounded-lg border border-border bg-surface-elevated p-3 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <p className="mb-2 text-sm font-semibold">Select files for <em>{picker}</em></p>
             <input autoFocus className="ec-input" placeholder="Filter…" value={pickerQuery}

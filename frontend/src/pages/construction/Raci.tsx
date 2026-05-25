@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Plus, Trash2, Users2, X } from 'lucide-react';
+import { Plus, Trash2, Users2 } from 'lucide-react';
+import { Modal, ModalHeader, ModalBody, ModalFooter, ModalClose } from '../../components/Modal';
 import { constructionApi, type RaciEntry, type RaciEntryInput } from '../../lib/construction';
 
 const EMPTY: RaciEntryInput = {
@@ -229,19 +230,13 @@ function RaciModal({
     setForm((f) => ({ ...f, [key]: value }));
 
   return (
-    <div
-      className="fixed inset-0 z-50 grid place-items-center bg-ink/40 p-4 backdrop-blur-sm"
-      onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
-    >
-      <div className="w-full max-w-2xl overflow-hidden rounded-xl border border-border bg-surface-elevated shadow-2xl">
-        <div className="flex items-center justify-between border-b border-border px-5 py-3">
-          <p className="font-semibold">{isNew ? 'New activity' : 'Edit activity'}</p>
-          <button type="button" className="ec-btn-ghost !p-2" onClick={onClose}><X size={16} /></button>
-        </div>
-        <form
-          className="max-h-[70vh] space-y-3 overflow-y-auto p-5"
-          onSubmit={(e) => { e.preventDefault(); save.mutate(); }}
-        >
+    <Modal open onClose={onClose} size="lg" labelledBy="raci-modal-title">
+      <ModalHeader>
+        <p id="raci-modal-title" className="font-semibold">{isNew ? 'New activity' : 'Edit activity'}</p>
+        <ModalClose onClose={onClose} />
+      </ModalHeader>
+      <form onSubmit={(e) => { e.preventDefault(); save.mutate(); }}>
+        <div className="max-h-[70vh] space-y-3 overflow-y-auto p-5">
           <div>
             <label className="ec-label">Activity</label>
             <input required className="ec-input" value={form.activity}
@@ -274,14 +269,14 @@ function RaciModal({
             <textarea className="ec-input min-h-[60px]" value={form.notes ?? ''}
               onChange={(e) => update('notes', e.target.value)} />
           </div>
-        </form>
-        <div className="flex justify-end gap-2 border-t border-border px-5 py-3">
+        </div>
+        <ModalFooter>
           <button type="button" className="ec-btn-secondary" onClick={onClose}>Cancel</button>
-          <button type="button" className="ec-btn-primary" disabled={save.isPending} onClick={() => save.mutate()}>
+          <button type="submit" className="ec-btn-primary" disabled={save.isPending}>
             {save.isPending ? 'Saving…' : isNew ? 'Add' : 'Save'}
           </button>
-        </div>
-      </div>
-    </div>
+        </ModalFooter>
+      </form>
+    </Modal>
   );
 }

@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { CalendarClock, GitBranch, Plus, Trash2, X } from 'lucide-react';
+import { CalendarClock, GitBranch, Plus, Trash2 } from 'lucide-react';
+import { Modal, ModalHeader, ModalBody, ModalFooter, ModalClose } from '../../components/Modal';
 import {
   constructionApi,
   shortDate,
@@ -182,8 +183,36 @@ export function ConstructionSchedulePage() {
                     className="contents"
                   >
                     <div
-                      className="sticky left-0 z-10 cursor-pointer border-t border-border/40 bg-surface-elevated px-3 py-2 text-xs hover:bg-surface-muted/30"
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`${t.name}, from ${shortDate(t.start_date)} to ${shortDate(t.end_date)}, ${t.progress_percent}% complete. Press Enter to edit.`}
+                      className="sticky left-0 z-10 cursor-pointer border-t border-border/40 bg-surface-elevated px-3 py-2 text-xs hover:bg-surface-muted/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                       onClick={() => setEditingTask(t)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setEditingTask(t);
+                        } else if (e.key === 'ArrowDown') {
+                          e.preventDefault();
+                          const next = tasks[tasks.indexOf(t) + 1];
+                          if (next) {
+                            const el = document.querySelector<HTMLElement>(
+                              `[data-gantt-task="${next.id}"]`,
+                            );
+                            el?.focus();
+                          }
+                        } else if (e.key === 'ArrowUp') {
+                          e.preventDefault();
+                          const prev = tasks[tasks.indexOf(t) - 1];
+                          if (prev) {
+                            const el = document.querySelector<HTMLElement>(
+                              `[data-gantt-task="${prev.id}"]`,
+                            );
+                            el?.focus();
+                          }
+                        }
+                      }}
+                      data-gantt-task={t.id}
                     >
                       <p className="truncate text-sm font-medium">{t.name}</p>
                       <p className="truncate text-[10px] text-ink-muted">
@@ -479,26 +508,18 @@ function TaskModal({
   });
 
   return (
-    <div
-      className="fixed inset-0 z-50 grid place-items-center bg-ink/40 p-4 backdrop-blur-sm"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="w-full max-w-2xl overflow-hidden rounded-xl border border-border bg-surface-elevated shadow-2xl">
-        <div className="flex items-center justify-between border-b border-border px-5 py-3">
-          <p className="font-semibold">{isNew ? 'New task' : 'Edit task'}</p>
-          <button type="button" className="ec-btn-ghost !p-2" onClick={onClose}>
-            <X size={16} />
-          </button>
-        </div>
-        <form
-          className="max-h-[70vh] space-y-3 overflow-y-auto p-5"
-          onSubmit={(e) => {
-            e.preventDefault();
-            save.mutate();
-          }}
-        >
+    <Modal open onClose={onClose} size="lg" labelledBy="task-modal-title">
+      <ModalHeader>
+        <p id="task-modal-title" className="font-semibold">{isNew ? 'New task' : 'Edit task'}</p>
+        <ModalClose onClose={onClose} />
+      </ModalHeader>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          save.mutate();
+        }}
+      >
+        <div className="max-h-[70vh] space-y-3 overflow-y-auto p-5">
           <div>
             <label className="ec-label">Name</label>
             <input
@@ -579,15 +600,15 @@ function TaskModal({
               />
             </div>
           </div>
-        </form>
-        <div className="flex justify-end gap-2 border-t border-border px-5 py-3">
+        </div>
+        <ModalFooter>
           <button type="button" className="ec-btn-secondary" onClick={onClose}>Cancel</button>
-          <button type="button" className="ec-btn-primary" disabled={save.isPending} onClick={() => save.mutate()}>
+          <button type="submit" className="ec-btn-primary" disabled={save.isPending}>
             {save.isPending ? 'Saving…' : isNew ? 'Create task' : 'Save'}
           </button>
-        </div>
-      </div>
-    </div>
+        </ModalFooter>
+      </form>
+    </Modal>
   );
 }
 
@@ -625,26 +646,18 @@ function DependencyModal({
   });
 
   return (
-    <div
-      className="fixed inset-0 z-50 grid place-items-center bg-ink/40 p-4 backdrop-blur-sm"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="w-full max-w-md overflow-hidden rounded-xl border border-border bg-surface-elevated shadow-2xl">
-        <div className="flex items-center justify-between border-b border-border px-5 py-3">
-          <p className="font-semibold">Link tasks</p>
-          <button type="button" className="ec-btn-ghost !p-2" onClick={onClose}>
-            <X size={16} />
-          </button>
-        </div>
-        <form
-          className="space-y-3 p-5"
-          onSubmit={(e) => {
-            e.preventDefault();
-            save.mutate();
-          }}
-        >
+    <Modal open onClose={onClose} size="md" labelledBy="dep-modal-title">
+      <ModalHeader>
+        <p id="dep-modal-title" className="font-semibold">Link tasks</p>
+        <ModalClose onClose={onClose} />
+      </ModalHeader>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          save.mutate();
+        }}
+      >
+        <ModalBody className="space-y-3">
           <div>
             <label className="ec-label">Predecessor</label>
             <select
@@ -693,19 +706,18 @@ function DependencyModal({
               />
             </div>
           </div>
-        </form>
-        <div className="flex justify-end gap-2 border-t border-border px-5 py-3">
+        </ModalBody>
+        <ModalFooter>
           <button type="button" className="ec-btn-secondary" onClick={onClose}>Cancel</button>
           <button
-            type="button"
+            type="submit"
             className="ec-btn-primary"
             disabled={save.isPending || form.predecessor_id === form.successor_id}
-            onClick={() => save.mutate()}
           >
             {save.isPending ? 'Linking…' : 'Add dependency'}
           </button>
-        </div>
-      </div>
-    </div>
+        </ModalFooter>
+      </form>
+    </Modal>
   );
 }

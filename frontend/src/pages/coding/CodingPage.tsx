@@ -538,7 +538,7 @@ function NewProjectModal({ onClose, onCreated }: {
   };
 
   return (
-    <div className="absolute inset-0 z-40 flex items-start justify-center bg-black/50 p-12" onClick={onClose}>
+    <div role="presentation" className="absolute inset-0 z-40 flex items-start justify-center bg-black/50 p-12" onClick={onClose}>
       <div className="w-full max-w-md rounded-lg border border-border bg-surface-elevated p-4 shadow-xl"
            onClick={(e) => e.stopPropagation()}>
         <div className="mb-3 flex items-center justify-between">
@@ -591,7 +591,7 @@ function SearchModal({
   });
 
   return (
-    <div className="absolute inset-0 z-40 flex items-start justify-center bg-black/50 p-12" onClick={onClose}>
+    <div role="presentation" className="absolute inset-0 z-40 flex items-start justify-center bg-black/50 p-12" onClick={onClose}>
       <div className="w-full max-w-2xl rounded-lg border border-border bg-surface-elevated p-3 shadow-xl"
            onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-2 border-b border-border pb-2">

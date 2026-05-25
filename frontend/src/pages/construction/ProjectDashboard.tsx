@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef, type KeyboardEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
 import {
@@ -197,41 +197,11 @@ export function ConstructionDashboardPage() {
               </Link>
             </div>
             <div className="overflow-x-auto p-4">
-              <table className="border-separate border-spacing-1">
-                <thead>
-                  <tr>
-                    <th className="text-[10px] uppercase tracking-wider text-ink-subtle"></th>
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <th
-                        key={i}
-                        className="px-2 text-center text-[10px] font-semibold uppercase tracking-wider text-ink-muted"
-                      >
-                        Impact {i}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {[5, 4, 3, 2, 1].map((p) => (
-                    <tr key={p}>
-                      <th className="pr-2 text-right text-[10px] font-semibold uppercase tracking-wider text-ink-muted">
-                        Prob {p}
-                      </th>
-                      {[1, 2, 3, 4, 5].map((i) => {
-                        const count = heatmap[p - 1][i - 1];
-                        return (
-                          <td
-                            key={`${p}-${i}`}
-                            className={`h-12 w-14 rounded-md text-center align-middle text-sm font-semibold ${heatmapCellClass(p, i)}`}
-                          >
-                            {count > 0 ? count : ''}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <RiskHeatmapGrid heatmap={heatmap} />
+              <span className="sr-only" id="risk-heatmap-help">
+                Risk heatmap: rows are probability 1 to 5, columns are impact 1 to 5.
+                Use arrow keys to move between cells.
+              </span>
               <div className="mt-3 flex flex-wrap items-center gap-3 text-xs">
                 <div className="flex items-center gap-1.5">
                   <span className="h-3 w-3 rounded-sm bg-emerald-500/50" /> Low
@@ -431,3 +401,113 @@ export function ConstructionDashboardPage() {
     </div>
   );
 }
+
+/**
+ * RiskHeatmapGrid — 5x5 probability/impact grid with full keyboard
+ * navigation (roving tabindex + arrow keys). Each cell exposes an
+ * aria-label so screen readers actually announce the meaning of every
+ * coloured tile.
+ */
+function RiskHeatmapGrid({ heatmap }: { heatmap: number[][] }) {
+  const activeRef = useRef<{ row: number; col: number }>({ row: 0, col: 0 });
+  const gridRef = useRef<HTMLDivElement | null>(null);
+
+  function focusCell(row: number, col: number) {
+    const clamped = {
+      row: Math.max(0, Math.min(4, row)),
+      col: Math.max(0, Math.min(4, col)),
+    };
+    activeRef.current = clamped;
+    const el = gridRef.current?.querySelector<HTMLElement>(
+      `[data-cell="${clamped.row}-${clamped.col}"]`,
+    );
+    el?.focus();
+  }
+
+  function onKey(e: KeyboardEvent<HTMLDivElement>) {
+    const { row, col } = activeRef.current;
+    switch (e.key) {
+      case 'ArrowUp':
+        e.preventDefault();
+        focusCell(row - 1, col);
+        break;
+      case 'ArrowDown':
+        e.preventDefault();
+        focusCell(row + 1, col);
+        break;
+      case 'ArrowLeft':
+        e.preventDefault();
+        focusCell(row, col - 1);
+        break;
+      case 'ArrowRight':
+        e.preventDefault();
+        focusCell(row, col + 1);
+        break;
+      case 'Home':
+        e.preventDefault();
+        focusCell(row, 0);
+        break;
+      case 'End':
+        e.preventDefault();
+        focusCell(row, 4);
+        break;
+      default:
+        break;
+    }
+  }
+
+  const rows = [5, 4, 3, 2, 1];
+  return (
+    <div
+      ref={gridRef}
+      role="grid"
+      aria-label="Risk heatmap, probability by impact"
+      aria-describedby="risk-heatmap-help"
+      className="inline-block"
+      onKeyDown={onKey}
+    >
+      <div className="grid grid-cols-[auto_repeat(5,3.5rem)] gap-1" role="row" aria-hidden="true">
+        <span />
+        {[1, 2, 3, 4, 5].map((i) => (
+          <span
+            key={`hdr-${i}`}
+            className="text-center text-[10px] font-semibold uppercase tracking-wider text-ink-muted"
+          >
+            Impact {i}
+          </span>
+        ))}
+      </div>
+      {rows.map((p, rowIdx) => (
+        <div key={`row-${p}`} role="row" className="grid grid-cols-[auto_repeat(5,3.5rem)] gap-1">
+          <span
+            role="rowheader"
+            className="pr-2 text-right text-[10px] font-semibold uppercase tracking-wider text-ink-muted"
+          >
+            Prob {p}
+          </span>
+          {[1, 2, 3, 4, 5].map((i, colIdx) => {
+            const count = heatmap[p - 1][i - 1];
+            const isFirst = rowIdx === 0 && colIdx === 0;
+            return (
+              <div
+                key={`${p}-${i}`}
+                role="gridcell"
+                tabIndex={isFirst ? 0 : -1}
+                data-cell={`${rowIdx}-${colIdx}`}
+                aria-label={`Probability ${p}, impact ${i}, ${count} ${count === 1 ? 'risk' : 'risks'}`}
+                className={`h-12 w-14 rounded-md text-center align-middle text-sm font-semibold flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${heatmapCellClass(p, i)}`}
+                onFocus={() => {
+                  activeRef.current = { row: rowIdx, col: colIdx };
+                }}
+              >
+                {count > 0 ? count : ''}
+              </div>
+            );
+          })}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+

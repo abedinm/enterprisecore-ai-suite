@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { AlertTriangle, Calendar, Clock, Plus, Trash2, Upload, X } from 'lucide-react';
+import { AlertTriangle, Calendar, Clock, Plus, Trash2, Upload } from 'lucide-react';
+import { Modal, ModalHeader, ModalBody, ModalFooter, ModalClose } from '../../components/Modal';
 import {
   academicApi,
   academicDeepApi,
@@ -234,26 +235,18 @@ function SubmitWorkModal({
     },
   });
   return (
-    <div
-      className="fixed inset-0 z-50 grid place-items-center bg-ink/40 p-4 backdrop-blur-sm"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="w-full max-w-md overflow-hidden rounded-xl border border-border bg-surface-elevated shadow-2xl">
-        <div className="flex items-center justify-between border-b border-border px-5 py-3">
-          <p className="font-semibold">Submit your work</p>
-          <button type="button" className="ec-btn-ghost !p-2" onClick={onClose}>
-            <X size={16} />
-          </button>
-        </div>
-        <form
-          className="space-y-3 p-5"
-          onSubmit={(e) => {
-            e.preventDefault();
-            submit.mutate();
-          }}
-        >
+    <Modal open onClose={onClose} size="md" labelledBy="submit-modal-title">
+      <ModalHeader>
+        <p id="submit-modal-title" className="font-semibold">Submit your work</p>
+        <ModalClose onClose={onClose} />
+      </ModalHeader>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          submit.mutate();
+        }}
+      >
+        <ModalBody className="space-y-3">
           <div>
             <label className="ec-label">Submission URL</label>
             <input
@@ -283,21 +276,21 @@ function SubmitWorkModal({
               onChange={(e) => setNotes(e.target.value)}
             />
           </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <button type="button" className="ec-btn-secondary" onClick={onClose}>
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="ec-btn-primary"
-              disabled={submit.isPending || !url.trim()}
-            >
-              {submit.isPending ? 'Saving…' : 'Submit'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        </ModalBody>
+        <ModalFooter>
+          <button type="button" className="ec-btn-secondary" onClick={onClose}>
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="ec-btn-primary"
+            disabled={submit.isPending || !url.trim()}
+          >
+            {submit.isPending ? 'Saving…' : 'Submit'}
+          </button>
+        </ModalFooter>
+      </form>
+    </Modal>
   );
 }
 
@@ -318,26 +311,18 @@ function AssignmentModal({ onClose }: { onClose: () => void }) {
     },
   });
   return (
-    <div
-      className="fixed inset-0 z-50 grid place-items-center bg-ink/40 p-4 backdrop-blur-sm"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="w-full max-w-lg overflow-hidden rounded-xl border border-border bg-surface-elevated shadow-2xl">
-        <div className="flex items-center justify-between border-b border-border px-5 py-3">
-          <p className="font-semibold">New assignment</p>
-          <button type="button" className="ec-btn-ghost !p-2" onClick={onClose}>
-            <X size={16} />
-          </button>
-        </div>
-        <form
-          className="space-y-3 p-5"
-          onSubmit={(e) => {
-            e.preventDefault();
-            save.mutate();
-          }}
-        >
+    <Modal open onClose={onClose} size="lg" labelledBy="assignment-modal-title">
+      <ModalHeader>
+        <p id="assignment-modal-title" className="font-semibold">New assignment</p>
+        <ModalClose onClose={onClose} />
+      </ModalHeader>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          save.mutate();
+        }}
+      >
+        <ModalBody className="space-y-3">
           <div>
             <label className="ec-label">Title</label>
             <input
@@ -384,20 +369,20 @@ function AssignmentModal({ onClose }: { onClose: () => void }) {
               }
             />
           </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <button type="button" className="ec-btn-secondary" onClick={onClose}>
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="ec-btn-primary"
-              disabled={save.isPending || !form.title.trim() || !form.due_date}
-            >
-              {save.isPending ? 'Saving…' : 'Create'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        </ModalBody>
+        <ModalFooter>
+          <button type="button" className="ec-btn-secondary" onClick={onClose}>
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="ec-btn-primary"
+            disabled={save.isPending || !form.title.trim() || !form.due_date}
+          >
+            {save.isPending ? 'Saving…' : 'Create'}
+          </button>
+        </ModalFooter>
+      </form>
+    </Modal>
   );
 }

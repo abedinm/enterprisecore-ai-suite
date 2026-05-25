@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { Download, Plus, Trash2, Users, Edit3, X, Check } from 'lucide-react';
 import { api } from '../../lib/api';
 import { formatCurrency, formatDate } from '../../lib/utils';
+import { TableSkipLink } from '../../components/TableSkipLink';
 
 type Line = { id?: string; description: string; quantity: number; unit_price: number; tax_rate: number; line_total?: string };
 type Invoice = {
@@ -106,10 +107,11 @@ export function InvoicesTab() {
         />
       )}
 
-      <div className="ec-card overflow-x-auto">
-        <table className="ec-table">
+      <div className="relative ec-card overflow-x-auto">
+        <TableSkipLink targetId="after-invoices-table" label="Skip invoices table" />
+        <table className="ec-table" aria-label="Invoices">
           <thead>
-            <tr><th>Number</th><th>Customer</th><th>Issued</th><th>Due</th><th>Total</th><th>Status</th><th></th></tr>
+            <tr><th scope="col">Number</th><th scope="col">Customer</th><th scope="col">Issued</th><th scope="col">Due</th><th scope="col">Total</th><th scope="col">Status</th><th scope="col"><span className="sr-only">Actions</span></th></tr>
           </thead>
           <tbody>
             {invoices.data?.length ? invoices.data.map((inv) => (
@@ -137,6 +139,7 @@ export function InvoicesTab() {
             )) : <tr><td colSpan={7} className="py-10 text-center text-ink-muted">No invoices yet — click "New invoice" to create one.</td></tr>}
           </tbody>
         </table>
+        <div id="after-invoices-table" tabIndex={-1} />
       </div>
     </div>
   );

@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { Calendar, Handshake, LineChart, Plus, Trash2, X } from 'lucide-react';
+import { Calendar, Handshake, LineChart, Plus, Trash2 } from 'lucide-react';
+import { Modal, ModalHeader, ModalBody, ModalFooter, ModalClose } from '../../components/Modal';
 import {
   academicApi,
   academicDeepApi,
@@ -192,26 +193,18 @@ function AdvisingModal({ onClose }: { onClose: () => void }) {
     },
   });
   return (
-    <div
-      className="fixed inset-0 z-50 grid place-items-center bg-ink/40 p-4 backdrop-blur-sm"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="w-full max-w-md overflow-hidden rounded-xl border border-border bg-surface-elevated shadow-2xl">
-        <div className="flex items-center justify-between border-b border-border px-5 py-3">
-          <p className="font-semibold">Book advising session</p>
-          <button type="button" className="ec-btn-ghost !p-2" onClick={onClose}>
-            <X size={16} />
-          </button>
-        </div>
-        <form
-          className="space-y-3 p-5"
-          onSubmit={(e) => {
-            e.preventDefault();
-            save.mutate();
-          }}
-        >
+    <Modal open onClose={onClose} size="md" labelledBy="advising-modal-title">
+      <ModalHeader>
+        <p id="advising-modal-title" className="font-semibold">Book advising session</p>
+        <ModalClose onClose={onClose} />
+      </ModalHeader>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          save.mutate();
+        }}
+      >
+        <ModalBody className="space-y-3">
           <div>
             <label className="ec-label">When</label>
             <input
@@ -247,20 +240,20 @@ function AdvisingModal({ onClose }: { onClose: () => void }) {
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
             />
           </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <button type="button" className="ec-btn-secondary" onClick={onClose}>
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="ec-btn-primary"
-              disabled={save.isPending || !form.scheduled_at}
-            >
-              {save.isPending ? 'Booking…' : 'Book'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        </ModalBody>
+        <ModalFooter>
+          <button type="button" className="ec-btn-secondary" onClick={onClose}>
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="ec-btn-primary"
+            disabled={save.isPending || !form.scheduled_at}
+          >
+            {save.isPending ? 'Booking…' : 'Book'}
+          </button>
+        </ModalFooter>
+      </form>
+    </Modal>
   );
 }

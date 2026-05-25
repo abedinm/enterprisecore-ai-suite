@@ -129,7 +129,11 @@ export function LoginPage() {
             />
           </div>
           {error ? (
-            <p className="rounded-lg bg-rose-500/10 px-3 py-2 text-sm text-rose-600 dark:text-rose-300">
+            <p
+              role="alert"
+              aria-live="assertive"
+              className="rounded-lg bg-rose-500/10 px-3 py-2 text-sm text-rose-700 dark:text-rose-200"
+            >
               {error}
             </p>
           ) : null}
