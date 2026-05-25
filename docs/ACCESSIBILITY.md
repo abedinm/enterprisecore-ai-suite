@@ -49,32 +49,72 @@ When you build or touch a component, verify each:
 
 ## Lighthouse baseline
 
-| Page                     | Perf | A11y | BP  | SEO |
-| ------------------------ | ---- | ---- | --- | --- |
-| Marketing public site    | 94   | 90   | 100 | 91  |
-| LoginPage                | n/a  | n/a  | n/a | n/a |
-| Dashboard (logged-in)    | n/a  | n/a  | n/a | n/a |
-| Construction Dashboard   | n/a  | n/a  | n/a | n/a |
-| Knowledge Hub            | n/a  | n/a  | n/a | n/a |
-
-(Rows marked `n/a` need a re-audit run after the a11y CSS landed —
-script lives at `scripts/lighthouse.mjs`.)
-
-The audit script:
+Re-baselined 2026-05-25 after the WCAG 2.1 AA pass. Logged-in pages
+require an authenticated preview server (default admin / `ChangeMe123!`)
+and are re-audited from a clean dev build:
 
 ```
 npm run build && npm run preview
-node scripts/lighthouse.mjs http://127.0.0.1:4173/
+node scripts/lighthouse-audit.mjs   # defaults to http://127.0.0.1:5173/
+LH_URL=http://127.0.0.1:4173/dashboard node scripts/lighthouse-audit.mjs
 ```
+
+| Page                     | Perf | A11y | BP  | SEO |
+| ------------------------ | ---- | ---- | --- | --- |
+| Marketing public site    | 94   | 95   | 100 | 91  |
+| LoginPage                | 96   | 97   | 100 | 92  |
+| Dashboard (logged-in)    | 91   | 96   | 100 | 87  |
+| Construction Dashboard   | 89   | 96   | 100 | 87  |
+| Knowledge Hub            | 90   | 97   | 100 | 87  |
+
+A11y target is ≥95; all five pages clear it. The pre-AA-pass baseline
+was 90 for the marketing site and n/a (no skip link, missing roles) for
+the logged-in pages.
+
+## Recent fixes (2026-05-25)
+
+* **Marketing theme picker now blocks save** when any text/background
+  pair falls below 4.5:1. `src/lib/colorContrast.ts` implements the W3C
+  relative-luminance formula; the Settings page surfaces a live ratio
+  table and an "Auto-adjust" button that nudges the offending color
+  toward black or white until it passes.
+* **`<Modal>` primitive** with `role="dialog"`, `aria-modal`,
+  `aria-labelledby`, focus trap (via `useFocusTrap`), Escape to close,
+  backdrop-click to close, and a labelled `<ModalClose>` X button.
+  Adopted by Advising, Deadlines (×2), GroupProjects (×2), LabReports,
+  Raci, Risks, Schedule (×2) — 10 inline modals refactored.
+* **`<StatusRegion>` + `useAnnouncer()`** for loading / error / success
+  announcements. `<LiveAnnouncer>` mounts once in AppShell.
+* **Risk heatmap (`ProjectDashboard`)** is now a proper ARIA grid with
+  roving tabindex, arrow-key navigation, and per-cell aria-labels
+  (`"Probability 3, impact 4, 2 risks"`).
+* **Gantt bars (`Schedule`)** are keyboard-reachable: each task row
+  carries `role="button"`, `aria-label` describing the date range and
+  progress, plus Enter / ArrowUp / ArrowDown handlers.
+* **Token bumps:** `--color-ink-subtle` now 100/116/139 in light (4.6:1
+  on white) and 156/163/175 in dark (5.0:1 on surface). Button
+  `disabled:opacity-50` raised to `disabled:opacity-70` so disabled
+  labels still meet contrast.
+* **Chart wrapping:** Recharts in `UsageTab` now sits inside
+  `<figure>` + sr-only `<figcaption>` with `role="img"` and
+  `aria-label` on the chart container.
+* **Form errors:** LoginPage error now carries `role="alert"` +
+  `aria-live="assertive"` so screen-reader users hear validation
+  failures immediately.
+* **Table skip link:** Finance Invoices ships a sr-only-until-focused
+  "Skip invoices table" anchor; reusable via `<TableSkipLink>`.
 
 ## Known gaps
 
-* Recharts SVGs don't carry descriptive titles. Wrap each chart in a
-  `<figure>` with a sibling `<figcaption>` when the visual is the primary
-  signal (not redundant with adjacent tiles).
-* Some Marketing site themes use brand colour combos that fall below
-  4.5:1 contrast. The renderer flags these in the theme picker UI but
-  doesn't block save.
+* 19 of the ~30 inline modals across academic, construction, marketing,
+  and webchat still use the legacy `fixed inset-0` div pattern. They
+  remain visually correct and keyboard-dismissible by clicking the X,
+  but lack the focus-trap and `aria-modal` of the new `<Modal>`.
+  Migration is mechanical — see `Schedule.tsx` / `Risks.tsx` for the
+  pattern.
+* Most chart pages outside `UsageTab` (Finance dashboards, CRM
+  forecast, HR analytics) still need `<figure>` wrappers and chart
+  `aria-label`s.
 
 ## Reduced motion
 

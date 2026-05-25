@@ -69,9 +69,22 @@ EXEMPT_PREFIXES: tuple[str, ...] = (
     "/api/v1/auth/magic-link",
     "/api/v1/auth/sso",
     "/api/v1/auth/webauthn",
+    # Pre-session tenant endpoints — no auth cookie yet, nothing to defend.
+    "/api/v1/tenants/signup",
+    "/api/v1/tenants/accept-invite",
+    # SSO callback / SAML ACS endpoints land back here without our cookie set;
+    # they validate state via their own one-time tokens.
+    "/api/v1/sso/oidc/callback",
+    "/api/v1/sso/saml/acs",
+    # WebAuthn authentication ceremony — gated by challenge state, not CSRF.
+    "/api/v1/webauthn/authenticate/begin",
+    "/api/v1/webauthn/authenticate/finish",
+    # Webhook signatures (Stripe, Slack, DocuSign, GitHub) are the auth.
     "/api/v1/webhooks",
+    "/api/v1/billing/stripe-webhook",
     "/api/v1/stripe",
     "/stripe/webhook",
+    # SCIM uses bearer tokens, never cookies.
     "/scim/v2",
     "/widget.js",
     "/site/",
