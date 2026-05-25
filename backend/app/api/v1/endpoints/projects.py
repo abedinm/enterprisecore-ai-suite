@@ -24,6 +24,7 @@ from app.schemas.projects import (
     SprintIn, SprintOut, TaskDependencyIn, TaskDependencyOut, TaskIn, TaskOut,
     TaskStatusUpdate, TimeEntryIn, TimeEntryOut,
 )
+from app.services.event_bus import publish_event
 
 router = APIRouter()
 KANBAN_COLUMNS = ["backlog", "todo", "in_progress", "in_review", "done"]
@@ -68,8 +69,14 @@ def get_project(pid: str, db: Session = Depends(get_db),
 
 @router.post("/projects", response_model=ProjectOut)
 def create_project(payload: ProjectIn, db: Session = Depends(get_db),
-                   _: User = Depends(require_roles(UserRole.admin, UserRole.manager))):
-    return _crud(Project, db, payload)
+                   user: User = Depends(require_roles(UserRole.admin, UserRole.manager))):
+    proj = _crud(Project, db, payload)
+    publish_event(
+        "projects.project.created",
+        payload={"project_id": proj.id, "name": proj.name},
+        user_id=user.id,
+    )
+    return proj
 
 
 @router.patch("/projects/{pid}", response_model=ProjectOut)
@@ -145,15 +152,22 @@ def update_task(tid: str, payload: TaskIn, db: Session = Depends(get_db),
 
 @router.post("/tasks/{tid}/status", response_model=TaskOut)
 def set_task_status(tid: str, payload: TaskStatusUpdate, db: Session = Depends(get_db),
-                    _: User = Depends(get_current_user)):
+                    user: User = Depends(get_current_user)):
     t = db.get(Task, tid)
     if not t:
         raise NotFoundError("Task not found")
+    previous = t.status
     t.status = payload.status
     if payload.position is not None:
         t.position = payload.position
     db.commit()
     db.refresh(t)
+    if payload.status == "done" and previous != "done":
+        publish_event(
+            "projects.task.completed",
+            payload={"task_id": t.id, "project_id": t.project_id, "title": t.title},
+            user_id=user.id,
+        )
     return t
 
 
@@ -609,15 +623,20 @@ def project_analytics(db: Session = Depends(get_db), _: User = Depends(get_curre
     ).scalar()
     avg_dur = round(float(avg_dur_query or 0), 1)
 
-    # Sprint burn rate (story points done per active sprint)
-    burn_rate: dict[str, int] = {}
+    # Sprint burn rate (story points done per active sprint).
+    # Single aggregate query grouped by sprint_id replaces the per-sprint loop
+    # that previously fired one SELECT per active sprint (N+1 against Task).
     active_sprints = db.scalars(select(Sprint).where(Sprint.status == "active")).all()
-    for s in active_sprints:
-        done_pts = db.scalar(
-            select(func.coalesce(func.sum(Task.story_points), 0))
-            .where(Task.sprint_id == s.id, Task.status == "done")
-        ) or 0
-        burn_rate[s.name] = int(done_pts)
+    sprint_pts_rows = db.execute(
+        select(Task.sprint_id, func.coalesce(func.sum(Task.story_points), 0))
+        .where(
+            Task.status == "done",
+            Task.sprint_id.in_([s.id for s in active_sprints]) if active_sprints else False,
+        )
+        .group_by(Task.sprint_id)
+    ).all() if active_sprints else []
+    pts_by_sprint = {sid: int(pts or 0) for sid, pts in sprint_pts_rows}
+    burn_rate: dict[str, int] = {s.name: pts_by_sprint.get(s.id, 0) for s in active_sprints}
 
     # Workload by assignee
     workload_q = db.execute(
@@ -627,17 +646,31 @@ def project_analytics(db: Session = Depends(get_db), _: User = Depends(get_curre
     ).all()
     workload_list = [{"assignee_id": uid or "unassigned", "open_tasks": cnt} for uid, cnt in workload_q]
 
-    # Project progress
+    # Project progress.
+    # Replaces the previous "load every project, then SELECT tasks per project"
+    # N+1 with two queries: one for the projects, one aggregate over tasks
+    # grouped by ``(project_id, status)`` — the new
+    # ``ix_tasks_project_status`` composite index makes this a single seek.
     projects = db.scalars(select(Project)).all()
+    task_agg_rows = db.execute(
+        select(Task.project_id, Task.status, func.count(Task.id))
+        .where(Task.project_id.is_not(None))
+        .group_by(Task.project_id, Task.status)
+    ).all()
+    # { project_id: { status: count } }
+    agg: dict[str, dict[str, int]] = {}
+    for pid, st, cnt in task_agg_rows:
+        agg.setdefault(pid, {})[st] = cnt
     project_progress = []
     for p in projects:
-        p_tasks = db.scalars(select(Task).where(Task.project_id == p.id)).all()
-        done = sum(1 for t in p_tasks if t.status == "done")
-        total_p = len(p_tasks) or 1
+        per = agg.get(p.id, {})
+        total_p = sum(per.values())
+        done = per.get("done", 0)
+        denom = total_p or 1
         project_progress.append({
             "id": p.id, "name": p.name, "color": p.color,
-            "total_tasks": len(p_tasks), "done_tasks": done,
-            "progress": round((done / total_p) * 100, 1),
+            "total_tasks": total_p, "done_tasks": done,
+            "progress": round((done / denom) * 100, 1),
             "status": p.status,
         })
 

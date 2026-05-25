@@ -1,0 +1,32 @@
+{% extends "marketing/base.html" %}
+{% block title %}Portfolio — {{ settings.name }}{% endblock %}
+{% block content %}
+<div class="container">
+  <section class="section">
+    <h1>Selected work</h1>
+    {% if not projects %}
+      <p class="meta">No projects have been added yet.</p>
+    {% endif %}
+    <div class="grid grid-2">
+      {% for project in projects %}
+        <div class="card project">
+          {% if project.image_id %}<img src="/site/uploads/{{ project.image_id }}" alt="{{ project.title }}">{% endif %}
+          <h2><a href="/site/portfolio/{{ project.slug }}">{{ project.title }}</a></h2>
+          {% if project.client or project.category %}
+            <p class="meta">
+              {% if project.client %}{{ project.client }}{% endif %}
+              {% if project.client and project.category %} · {% endif %}
+              {% if project.category %}{{ project.category }}{% endif %}
+              {% if project.year %} · {{ project.year }}{% endif %}
+            </p>
+          {% endif %}
+          {% if project.summary %}<p>{{ project.summary }}</p>{% endif %}
+          {% if project.tags %}
+            <p>{% for tag in project.tags %}<span class="tag">{{ tag }}</span>{% endfor %}</p>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}

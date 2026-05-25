@@ -1,0 +1,16 @@
+{
+  "errors.invalid_credentials": "Invalid email or password",
+  "errors.not_authenticated": "Not authenticated",
+  "errors.user_inactive": "User account is inactive or does not exist",
+  "errors.permission_denied": "You do not have permission to perform this action",
+  "errors.not_found": "{entity} not found",
+  "errors.conflict_email": "A user with this email already exists",
+  "errors.mfa_required": "MFA code required",
+  "errors.mfa_invalid": "Invalid MFA code",
+  "errors.feature_unavailable": "Feature '{feature}' is not enabled on the current license plan.",
+  "errors.required_field": "{field} is required",
+  "errors.invalid_locale": "Unsupported locale '{locale}'",
+  "ok.saved": "Saved",
+  "ok.deleted": "Deleted",
+  "errors.csrf_failed": "Your session needs to refresh — reload the page and try again."
+}

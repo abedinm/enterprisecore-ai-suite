@@ -1,0 +1,43 @@
+{% extends "marketing/base.html" %}
+{% block title %}About — {{ settings.name }}{% endblock %}
+{% block content %}
+<div class="container">
+  <section class="section">
+    <h1>About {{ settings.name }}</h1>
+    {% if settings.description %}<p>{{ settings.description }}</p>{% endif %}
+    {% set about_section = sections | selectattr("type", "equalto", "about") | selectattr("enabled") | list | first %}
+    {% if about_section %}
+      {% if about_section.eyebrow %}<div class="eyebrow">{{ about_section.eyebrow }}</div>{% endif %}
+      {% if about_section.title %}<h2>{{ about_section.title }}</h2>{% endif %}
+      {% if about_section.body %}<p>{{ about_section.body }}</p>{% endif %}
+    {% endif %}
+  </section>
+
+  {% if team %}
+    <section class="section">
+      <h2>The team</h2>
+      <div class="grid grid-3">
+        {% for member in team %}
+          <div class="card team">
+            {% if member.image_id %}<img src="/site/uploads/{{ member.image_id }}" alt="{{ member.name }}">{% endif %}
+            <h3>{{ member.name }}</h3>
+            <p class="meta">{{ member.role }}</p>
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+  {% if faqs %}
+    <section class="section">
+      <h2>Frequently asked</h2>
+      {% for faq in faqs %}
+        <div class="faq-item">
+          <h3>{{ faq.question }}</h3>
+          <p>{{ faq.answer }}</p>
+        </div>
+      {% endfor %}
+    </section>
+  {% endif %}
+</div>
+{% endblock %}

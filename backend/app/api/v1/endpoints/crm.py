@@ -25,6 +25,7 @@ from app.schemas.crm import (
 )
 from app.services import crm as crm_svc
 from app.services.audit import record_audit
+from app.services.event_bus import publish_event
 
 router = APIRouter()
 
@@ -112,13 +113,25 @@ def list_leads(status: str | None = None, db: Session = Depends(get_db),
 @router.post("/leads", response_model=LeadOut)
 def create_lead(payload: LeadIn, db: Session = Depends(get_db),
                 user: User = Depends(get_current_user)):
-    return _create(Lead, db, payload, user, "lead", name_key="source")
+    lead = _create(Lead, db, payload, user, "lead", name_key="source")
+    publish_event(
+        "crm.lead.created",
+        payload={"lead_id": lead.id, "source": lead.source, "status": lead.status},
+        user_id=user.id,
+    )
+    return lead
 
 
 @router.patch("/leads/{lid}", response_model=LeadOut)
 def update_lead(lid: str, payload: LeadIn, db: Session = Depends(get_db),
                 user: User = Depends(get_current_user)):
-    return _update(Lead, db, payload, lid, user, "lead")
+    lead = _update(Lead, db, payload, lid, user, "lead")
+    publish_event(
+        "crm.lead.updated",
+        payload={"lead_id": lead.id, "status": lead.status},
+        user_id=user.id,
+    )
+    return lead
 
 
 @router.delete("/leads/{lid}", status_code=204)
@@ -203,6 +216,18 @@ def update_deal_stage(did: str, payload: DealStageUpdate, db: Session = Depends(
            {"from": previous, "to": payload.stage, "title": deal.title})
     db.commit()
     db.refresh(deal)
+    if payload.stage == "won" and previous != "won":
+        publish_event(
+            "crm.deal.won",
+            payload={"deal_id": deal.id, "title": deal.title, "value": str(deal.value)},
+            user_id=user.id,
+        )
+    elif payload.stage == "lost" and previous != "lost":
+        publish_event(
+            "crm.deal.lost",
+            payload={"deal_id": deal.id, "title": deal.title, "value": str(deal.value)},
+            user_id=user.id,
+        )
     return deal
 
 

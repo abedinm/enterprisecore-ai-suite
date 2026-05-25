@@ -1,0 +1,177 @@
+{
+  "title": "EnterpriseCore — Construction PM",
+  "uid": "ec-construction",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "tags": ["enterprisecore", "construction"],
+  "refresh": "5m",
+  "time": { "from": "now-30d", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "query": "prometheus",
+        "current": { "text": "Prometheus", "value": "Prometheus" }
+      },
+      {
+        "name": "tenant",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "${datasource}" },
+        "query": "label_values(ec_construction_projects_total, tenant_id)",
+        "refresh": 2,
+        "includeAll": true,
+        "multi": true,
+        "label": "Tenant"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Active projects",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(ec_construction_projects_total{status=\"active\",tenant_id=~\"$tenant\"})"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Overdue milestones",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(ec_construction_milestones_overdue{tenant_id=~\"$tenant\"})"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 },
+              { "color": "red", "value": 10 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Open risks",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(ec_construction_risks_open{tenant_id=~\"$tenant\"})"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "RFIs awaiting response",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(ec_construction_rfis_open{tenant_id=~\"$tenant\"})"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "bargauge",
+      "title": "Open risks by severity",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (severity) (ec_construction_risks_open{tenant_id=~\"$tenant\"})",
+          "legendFormat": "{{severity}}"
+        }
+      ],
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "horizontal"
+      }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Projects created / closed per week",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(ec_construction_projects_created_total{tenant_id=~\"$tenant\"}[7d]))",
+          "legendFormat": "created"
+        },
+        {
+          "refId": "B",
+          "expr": "sum(increase(ec_construction_projects_closed_total{tenant_id=~\"$tenant\"}[7d]))",
+          "legendFormat": "closed"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "table",
+      "title": "Top 20 projects by open issues",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 10 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "topk(20, ec_construction_issues_open{tenant_id=~\"$tenant\"})",
+          "format": "table",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "table",
+      "title": "Overdue milestones (snapshot)",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "x": 12, "y": 12, "w": 12, "h": 10 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "ec_construction_milestones_overdue{tenant_id=~\"$tenant\"} > 0",
+          "format": "table",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Daily logs submitted",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "x": 0, "y": 22, "w": 24, "h": 6 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (tenant_id) (rate(ec_construction_daily_logs_total{tenant_id=~\"$tenant\"}[1d])) * 86400",
+          "legendFormat": "{{tenant_id}}"
+        }
+      ]
+    }
+  ]
+}

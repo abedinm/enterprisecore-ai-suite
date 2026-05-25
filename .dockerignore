@@ -1,0 +1,61 @@
+# VCS
+**/.git
+**/.gitignore
+**/.github
+
+# Local env / IDE
+**/.venv
+**/venv
+**/.env
+**/.env.*
+!**/.env.example
+**/.idea
+**/.vscode
+**/.claude
+
+# Python build/test
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+**/htmlcov
+**/coverage.xml
+**/.coverage
+**/build
+**/dist
+**/*.egg-info
+
+# Node
+**/node_modules
+**/npm-debug.log*
+**/yarn-error.log
+**/pnpm-debug.log*
+
+# Frontend artefacts (only the backend image needs the repo; the frontend
+# image is built from its own Dockerfile which sets its own context).
+electron/
+frontend/dist/
+
+# Generated user data — must never be baked into an image
+backend/storage/
+backend/htmlcov/
+backend/dist/
+backend/build/
+backend/coverage.xml
+backend/.coverage
+backend/*.log
+
+# Top-level junk
+*.log
+.DS_Store
+Thumbs.db
+
+# Docs / installer artefacts not needed in the runtime image
+docs/
+installer/
+landing.html
+
+# Keep deploy/ out of the build context — Dockerfile lives at root but the
+# infra files don't belong in the image.
+deploy/

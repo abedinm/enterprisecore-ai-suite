@@ -1,0 +1,16 @@
+{
+  "errors.invalid_credentials": "E-mail ou mot de passe invalides",
+  "errors.not_authenticated": "Non authentifié",
+  "errors.user_inactive": "Le compte utilisateur est inactif ou n'existe pas",
+  "errors.permission_denied": "Vous n'avez pas la permission d'effectuer cette action",
+  "errors.not_found": "{entity} introuvable",
+  "errors.conflict_email": "Un utilisateur avec cet e-mail existe déjà",
+  "errors.mfa_required": "Code MFA requis",
+  "errors.mfa_invalid": "Code MFA invalide",
+  "errors.feature_unavailable": "La fonctionnalité '{feature}' n'est pas incluse dans le plan actuel.",
+  "errors.required_field": "{field} est obligatoire",
+  "errors.invalid_locale": "Langue non prise en charge '{locale}'",
+  "ok.saved": "Enregistré",
+  "ok.deleted": "Supprimé",
+  "errors.csrf_failed": "Ta session doit être rafraîchie — recharge la page et réessaie."
+}

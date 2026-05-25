@@ -1,0 +1,27 @@
+{% extends "marketing/base.html" %}
+{% block title %}{{ project.title }} — {{ settings.name }}{% endblock %}
+{% block content %}
+<div class="container">
+  <article class="section project">
+    {% if project.image_id %}<img src="/site/uploads/{{ project.image_id }}" alt="{{ project.title }}">{% endif %}
+    <p><a href="/site/portfolio">&larr; Back to portfolio</a></p>
+    <h1>{{ project.title }}</h1>
+    <p class="meta">
+      {% if project.client %}{{ project.client }}{% endif %}
+      {% if project.client and project.category %} · {% endif %}
+      {% if project.category %}{{ project.category }}{% endif %}
+      {% if project.year %} · {{ project.year }}{% endif %}
+    </p>
+    {% if project.summary %}<p><strong>{{ project.summary }}</strong></p>{% endif %}
+    {% for para in body_paragraphs %}
+      <p>{{ para }}</p>
+    {% endfor %}
+    {% if project.tags %}
+      <p>{% for tag in project.tags %}<span class="tag">{{ tag }}</span>{% endfor %}</p>
+    {% endif %}
+    {% if project.external_url %}
+      <p><a class="btn" href="{{ project.external_url }}">Visit the live project</a></p>
+    {% endif %}
+  </article>
+</div>
+{% endblock %}

@@ -1,0 +1,99 @@
+{{- if .Values.networkPolicy.enabled -}}
+# Backend: accept traffic only from the frontend pods and from the ingress
+# controller namespace. Egress is allowed to Postgres + DNS + outbound HTTPS
+# (for AI provider APIs).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "enterprisecore.backend.fullname" . }}
+  labels:
+    {{- include "enterprisecore.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "enterprisecore.backend.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              {{- include "enterprisecore.frontend.selectorLabels" . | nindent 14 }}
+        # Allow ingress controllers in known namespaces. Adjust as needed.
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - port: 8765
+          protocol: TCP
+  egress:
+    # DNS
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+    # Postgres
+    {{- if .Values.postgres.enabled }}
+    - to:
+        - podSelector:
+            matchLabels:
+              {{- include "enterprisecore.postgres.selectorLabels" . | nindent 14 }}
+      ports:
+        - port: 5432
+          protocol: TCP
+    {{- end }}
+    # Outbound HTTPS (AI APIs, license server, Sentry, etc.)
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+              - 169.254.0.0/16
+      ports:
+        - port: 443
+          protocol: TCP
+        - port: 11434
+          protocol: TCP  # Ollama if external
+---
+# Frontend: accept from ingress controller, egress to backend service.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "enterprisecore.frontend.fullname" . }}
+  labels:
+    {{- include "enterprisecore.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "enterprisecore.frontend.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - port: 80
+          protocol: TCP
+  egress:
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - port: 53
+          protocol: UDP
+    - to:
+        - podSelector:
+            matchLabels:
+              {{- include "enterprisecore.backend.selectorLabels" . | nindent 14 }}
+      ports:
+        - port: 8765
+          protocol: TCP
+{{- end }}

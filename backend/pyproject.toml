@@ -9,3 +9,27 @@ ignore = ["E501"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+# Coverage gate is set to the floor we currently meet so CI doesn't lie.
+# Raise this number alongside new test work — never lower it without an
+# explicit ADR. See docs/SECURITY_HARDENING.md for the rationale.
+addopts = "--cov=app --cov-report=term-missing --cov-report=html:htmlcov --cov-report=xml --cov-fail-under=65"
+
+[tool.coverage.run]
+branch = false
+source = ["app"]
+omit = [
+    "app/__init__.py",
+    "*/alembic/*",
+    "*/tests/*",
+    "app/main.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
+show_missing = true
+skip_covered = false

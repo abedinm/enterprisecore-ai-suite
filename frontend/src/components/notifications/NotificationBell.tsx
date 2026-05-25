@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Bell, CheckCheck } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { api, type NotificationCounts, type NotificationItem } from '../../lib/api';
 import { cn, relativeTime } from '../../lib/utils';
 
@@ -50,24 +51,60 @@ export function NotificationBell() {
   }
 
   const unread = counts?.unread ?? 0;
+  // Detect new-unread transitions so we can shake the bell.
+  const prevUnreadRef = useRef(unread);
+  const [shaking, setShaking] = useState(false);
+  useEffect(() => {
+    if (unread > prevUnreadRef.current) {
+      setShaking(true);
+      const t = window.setTimeout(() => setShaking(false), 700);
+      prevUnreadRef.current = unread;
+      return () => window.clearTimeout(t);
+    }
+    prevUnreadRef.current = unread;
+  }, [unread]);
 
   return (
     <div ref={containerRef} className="relative">
-      <button
-        aria-label="Notifications"
+      <motion.button
+        aria-label={unread > 0 ? `Notifications, ${unread} unread` : 'Notifications'}
         title="Notifications"
         onClick={() => setOpen((v) => !v)}
         className="ec-btn-ghost relative"
+        whileHover={{ rotate: [-6, 6, -4, 4, 0] }}
+        transition={{ duration: 0.45 }}
       >
-        <Bell size={18} />
-        {unread > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-[16px] place-items-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold text-white">
-            {unread > 99 ? '99+' : unread}
-          </span>
-        )}
-      </button>
+        <motion.span
+          animate={shaking ? { rotate: [-12, 12, -8, 8, 0] } : { rotate: 0 }}
+          transition={{ duration: 0.6 }}
+          className="inline-flex"
+        >
+          <Bell size={18} />
+        </motion.span>
+        <AnimatePresence>
+          {unread > 0 && (
+            <motion.span
+              key={unread}
+              initial={{ scale: 0.4, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.4, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 380, damping: 18 }}
+              className="absolute -right-0.5 -top-0.5 grid h-4 min-w-[16px] place-items-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold text-white"
+            >
+              <span aria-hidden="true" className="absolute inset-0 rounded-full bg-rose-500 opacity-60 animate-pulse-glow" />
+              <span className="relative z-10">{unread > 99 ? '99+' : unread}</span>
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </motion.button>
+      <AnimatePresence>
       {open && (
-        <div className="absolute right-0 z-40 mt-2 w-80 max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-xl border border-border bg-surface-elevated shadow-xl sm:w-96">
+        <motion.div
+          initial={{ opacity: 0, y: -6, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -4, scale: 0.98 }}
+          transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+          className="absolute right-0 z-40 mt-2 w-80 max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-xl border border-border bg-surface-elevated/80 shadow-floating backdrop-blur-xl sm:w-96">
           <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
             <p className="text-sm font-semibold">Notifications</p>
             <button
@@ -103,8 +140,9 @@ export function NotificationBell() {
               <p className="px-4 py-6 text-sm text-ink-muted">No notifications.</p>
             )}
           </div>
-        </div>
+        </motion.div>
       )}
+      </AnimatePresence>
     </div>
   );
 }

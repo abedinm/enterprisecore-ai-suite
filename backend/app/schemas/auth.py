@@ -41,6 +41,27 @@ class AdminUserUpdate(BaseModel):
 class LoginRequest(BaseModel):
     email: str = Field(min_length=3, max_length=255)  # accept local-only emails like admin@local
     password: str = Field(min_length=1)
+    mfa_code: str | None = Field(default=None, min_length=6, max_length=10,
+                                 description="TOTP code; required if MFA enabled.")
+
+
+class MfaEnrollOut(BaseModel):
+    secret: str
+    otpauth_url: str
+    qr_png_base64: str
+
+
+class MfaVerifyIn(BaseModel):
+    code: str = Field(min_length=6, max_length=10)
+
+
+class MfaStatusOut(BaseModel):
+    enabled: bool
+
+
+class MfaDisableIn(BaseModel):
+    password: str
+    code: str = Field(min_length=6, max_length=10)
 
 
 class RefreshRequest(BaseModel):

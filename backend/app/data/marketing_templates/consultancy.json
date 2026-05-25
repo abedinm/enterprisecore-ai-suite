@@ -1,0 +1,339 @@
+{
+  "id": "consultancy",
+  "name": "Boutique Consultancy",
+  "description": "Premium consultancy starter site with people-led positioning, leadership team, capability areas, and case-study portfolio. Navy and cream palette.",
+  "preview_image": null,
+  "settings": {
+    "name": "Northwell Partners",
+    "tagline": "A boutique consultancy for organisations facing complex change.",
+    "description": "Northwell Partners is a senior-led advisory firm working with leadership teams on strategy, operations, and capability across the energy, financial services, and public sectors.",
+    "logo_text": "Northwell",
+    "logo_dot": true,
+    "base_url": "",
+    "seo_title": "Northwell Partners — Senior-led strategy and operations advisory",
+    "seo_description": "A boutique advisory firm. Senior teams, narrow specialisations, long client relationships.",
+    "theme_mode": "light",
+    "primary_color": "#183F9D",
+    "accent_color": "#172126",
+    "heading_font": "Fraunces",
+    "body_font": "Inter",
+    "button_style": "square",
+    "density": "comfortable",
+    "radius": 4,
+    "contact_email": "engage@northwell.example",
+    "contact_phone": "+44 20 4555 0142",
+    "contact_address": "12 Cornhill, London EC3V 3ND, United Kingdom",
+    "contact_hours": "Monday to Friday, 9am to 6pm GMT"
+  },
+  "navigation": [
+    {"label": "About", "route": "about", "enabled": true, "order": 0},
+    {"label": "Capabilities", "route": "services", "enabled": true, "order": 1},
+    {"label": "Case studies", "route": "portfolio", "enabled": true, "order": 2},
+    {"label": "People", "route": "about", "enabled": true, "order": 3},
+    {"label": "Insights", "route": "blog", "enabled": true, "order": 4},
+    {"label": "Contact", "route": "contact", "enabled": true, "order": 5}
+  ],
+  "sections": [
+    {
+      "type": "hero",
+      "enabled": true,
+      "eyebrow": "Senior-led advisory",
+      "title": "A boutique consultancy for organisations facing complex change.",
+      "body": "We are a small firm of partners and principals who work directly with leadership teams. No layers, no leverage model, no junior team running the engagement while the partner is in another room.",
+      "order": 0,
+      "payload": {
+        "primary_cta": {"label": "Speak with a partner", "href": "#contact"},
+        "secondary_cta": {"label": "Read our capabilities", "href": "#services"},
+        "stats": [
+          {"value": "12", "label": "Partners and principals"},
+          {"value": "70%", "label": "Repeat client revenue"},
+          {"value": "3 sectors", "label": "Energy, financial services, public"}
+        ]
+      }
+    },
+    {
+      "type": "about",
+      "enabled": true,
+      "eyebrow": "How we work",
+      "title": "The work is done by the people you meet.",
+      "body": "Every Northwell engagement is staffed by partners and principals. We do not run an apprentice model. When you hire us, the people who shaped the proposal are the people doing the work. That is the whole pitch and the only honest version of what a boutique firm is.",
+      "order": 1,
+      "payload": {
+        "values": [
+          {"title": "Senior staffing", "body": "Partners on the page, on the call, and in the workshop. Not a junior with a brief."},
+          {"title": "Narrow focus", "body": "Three sectors. We say no to work outside that scope so we can stay deep."},
+          {"title": "Long relationships", "body": "Most of our clients have worked with us across multiple engagements over multiple years."}
+        ]
+      }
+    },
+    {
+      "type": "services",
+      "enabled": true,
+      "eyebrow": "Capabilities",
+      "title": "Four capability areas, each led by a partner.",
+      "body": "Strategy, operations, organisation, and capability. Engagement scope depends on the question, not on a fixed methodology.",
+      "order": 2,
+      "payload": {
+        "show_limit": 4
+      }
+    },
+    {
+      "type": "projects",
+      "enabled": true,
+      "eyebrow": "Selected work",
+      "title": "Case studies from the last 18 months.",
+      "body": "A sample of recent engagements, published with client permission.",
+      "order": 3,
+      "payload": {
+        "layout": "cards",
+        "show_limit": 4
+      }
+    },
+    {
+      "type": "testimonials",
+      "enabled": true,
+      "eyebrow": "What clients say",
+      "title": "Plain-spoken feedback from leadership teams.",
+      "body": "",
+      "order": 4,
+      "payload": {
+        "layout": "stacked"
+      }
+    },
+    {
+      "type": "about",
+      "enabled": true,
+      "eyebrow": "People",
+      "title": "Leadership team.",
+      "body": "Four partners lead the firm. The full directory of principals, associates, and advisors is available on request.",
+      "order": 5,
+      "payload": {
+        "show_team": true
+      }
+    },
+    {
+      "type": "cta",
+      "enabled": true,
+      "eyebrow": "Start a conversation",
+      "title": "We respond to every enquiry within two working days.",
+      "body": "Tell us what you are working on. If it is not a fit, we will say so and where possible point you to a firm that is.",
+      "order": 6,
+      "payload": {
+        "primary_cta": {"label": "Email a partner", "href": "mailto:engage@northwell.example"},
+        "secondary_cta": {"label": "See our capabilities", "href": "#services"}
+      }
+    }
+  ],
+  "projects": [
+    {
+      "title": "Operating model design for a European energy retailer",
+      "client": "Tier-1 European energy retailer",
+      "category": "Operations",
+      "summary": "A new operating model to support the company's transition from commodity supply to a service-led customer proposition.",
+      "body": "We led the operating-model design across six months: customer journeys, organisation structure, capability gaps, technology dependencies, and a phased implementation plan. The client took the design into execution with our principals embedded for the first nine months.",
+      "year": "2025",
+      "tags": ["operating model", "energy", "transformation"],
+      "featured": true,
+      "external_url": "",
+      "order": 0
+    },
+    {
+      "title": "Strategy refresh for a national infrastructure agency",
+      "client": "UK public-sector infrastructure agency",
+      "category": "Strategy",
+      "summary": "A three-year strategic plan covering portfolio prioritisation, capability investment, and partnership model.",
+      "body": "The agency had grown its remit faster than its operating model could absorb. We worked with the executive across four months to set portfolio rules, redesign the capability investment plan, and reset the partnership model with delivery partners.",
+      "year": "2024",
+      "tags": ["strategy", "public sector", "portfolio"],
+      "featured": true,
+      "external_url": "",
+      "order": 1
+    },
+    {
+      "title": "Risk and capability review for a Tier-1 European bank",
+      "client": "European wholesale bank",
+      "category": "Capability",
+      "summary": "An independent review of the bank's non-financial risk capability across three lines of defence, with a redesign roadmap.",
+      "body": "The board commissioned the review after two regulatory findings. We led an eight-week diagnostic, ran twenty-six interviews across the three lines of defence, and delivered a redesign roadmap that the new CRO took into execution.",
+      "year": "2024",
+      "tags": ["risk", "financial services", "capability"],
+      "featured": false,
+      "external_url": "",
+      "order": 2
+    },
+    {
+      "title": "Post-merger integration plan for a renewables developer",
+      "client": "Mid-cap renewables developer",
+      "category": "Operations",
+      "summary": "A 100-day plan and 18-month integration roadmap following the acquisition of a smaller competitor.",
+      "body": "We worked with the CEO and CFO from week one post-close to write the integration plan, design the new organisation, and stand up the integration management office. Northwell partners chaired the steering committee for the first six months.",
+      "year": "2025",
+      "tags": ["integration", "renewables", "M&A"],
+      "featured": false,
+      "external_url": "",
+      "order": 3
+    }
+  ],
+  "posts": [
+    {
+      "title": "Why we say no to most of the work we are offered",
+      "slug": "why-we-say-no-to-most-work",
+      "excerpt": "A note on what it means to run a narrow firm and the discipline it requires.",
+      "body": "Most consulting firms are organised around growth. Northwell is organised around fit. We work in three sectors and on four capability areas. When work falls outside that scope we say so, even when the work is appealing. The discipline of saying no is what keeps the team senior and the engagements deep.",
+      "author": "Sarah Whitlock",
+      "category": "Firm",
+      "tags": ["positioning", "firm"],
+      "publish_date": null,
+      "status": "published",
+      "seo_title": "Why we say no to most work",
+      "seo_description": "A note on running a narrow firm with discipline."
+    },
+    {
+      "title": "Operating-model design in regulated industries",
+      "slug": "operating-model-design-regulated-industries",
+      "excerpt": "Three principles we apply when redesigning an operating model under regulatory scrutiny.",
+      "body": "Operating-model work in regulated industries is constrained by what the regulator will accept, what the board can defend, and what the operations team can actually run. The interesting design space sits in the overlap of those three. This note sets out the three principles we apply to find it.",
+      "author": "James Okafor",
+      "category": "Method",
+      "tags": ["operating model", "regulation"],
+      "publish_date": null,
+      "status": "published",
+      "seo_title": "Operating-model design under regulation",
+      "seo_description": "Three principles for operating-model design in regulated industries."
+    },
+    {
+      "title": "What a 100-day plan actually contains",
+      "slug": "what-a-100-day-plan-actually-contains",
+      "excerpt": "A working template for the first 100 days of a post-merger integration.",
+      "body": "100-day plans are easy to write and hard to land. This note shares the working template we use with clients in the first ten days after close. It is short, it is specific, and it commits the executive to ten decisions that the integration depends on.",
+      "author": "Diana Kovac",
+      "category": "Method",
+      "tags": ["integration", "post-merger"],
+      "publish_date": null,
+      "status": "draft",
+      "seo_title": "What a 100-day plan contains",
+      "seo_description": "A working template for the first 100 days of a post-merger integration."
+    }
+  ],
+  "services": [
+    {
+      "icon": "compass",
+      "title": "Strategy",
+      "summary": "Strategic plans, portfolio choices, market entry, and refreshes for executives who need a working document, not a slide deck.",
+      "details": "Engagement scope typically runs eight to sixteen weeks. Partner-led, with a small principal team. We deliver a written strategy that the executive can take to the board.",
+      "price": "Engagements scoped from £80,000",
+      "featured": true,
+      "order": 0
+    },
+    {
+      "icon": "settings",
+      "title": "Operations",
+      "summary": "Operating-model design, transformation programme design, and integration management for organisations under stress or change.",
+      "details": "Most operations work runs three to nine months and includes an implementation phase with a Northwell principal embedded in the client team.",
+      "price": "Engagements scoped from £120,000",
+      "featured": true,
+      "order": 1
+    },
+    {
+      "icon": "users",
+      "title": "Organisation",
+      "summary": "Structure, governance, decision rights, and people transitions for executive teams running through a structural change.",
+      "details": "Organisation work pairs design with executive coaching. Most engagements include a 90-day support window after go-live.",
+      "price": "Engagements scoped from £60,000",
+      "featured": false,
+      "order": 2
+    },
+    {
+      "icon": "book",
+      "title": "Capability",
+      "summary": "Independent reviews and redesign of risk, finance, technology, and people capabilities for executives and boards.",
+      "details": "Six to twelve weeks for a diagnostic, often followed by a longer redesign phase. Independent of the client's internal teams and reporting lines.",
+      "price": "Diagnostics from £45,000",
+      "featured": false,
+      "order": 3
+    }
+  ],
+  "testimonials": [
+    {
+      "quote": "Northwell are the only firm I have worked with where the partner is on every call. That changes how candid we can be about the real problems.",
+      "author": "Group COO",
+      "role": "European energy retailer",
+      "order": 0
+    },
+    {
+      "quote": "They told us the engagement was not a fit before we got past the first meeting. We have hired them three times since, on the right kind of work.",
+      "author": "Director General",
+      "role": "Public-sector infrastructure agency",
+      "order": 1
+    },
+    {
+      "quote": "The team stayed embedded for nine months after the design phase. That is what made the difference between a deck and an operating change.",
+      "author": "Chief Risk Officer",
+      "role": "European wholesale bank",
+      "order": 2
+    }
+  ],
+  "faqs": [
+    {
+      "question": "How do you structure engagements?",
+      "answer": "Engagements are scoped against a written question. Most run between eight weeks and nine months and are partner-led from end to end. We do not run leveraged teams.",
+      "order": 0
+    },
+    {
+      "question": "What is the team size on a typical engagement?",
+      "answer": "Two to five people. A partner, one or two principals, and occasionally a senior associate. The same people are on the work for the full engagement.",
+      "order": 1
+    },
+    {
+      "question": "Where are you based?",
+      "answer": "London is our registered office. The firm works across the United Kingdom, the Nordics, and the Netherlands. Travel is included in the fee, accommodation is billed at cost.",
+      "order": 2
+    },
+    {
+      "question": "Do you take work outside your three sectors?",
+      "answer": "Rarely. If you ask we will be honest about whether we are the right firm. If we are not, we will try to point you to one that is.",
+      "order": 3
+    },
+    {
+      "question": "How quickly can you start?",
+      "answer": "Most engagements begin within three to six weeks of a signed scope. Faster mobilisation is possible on a case-by-case basis for existing clients.",
+      "order": 4
+    }
+  ],
+  "team": [
+    {
+      "name": "Sarah Whitlock",
+      "role": "Managing Partner · Strategy",
+      "order": 0
+    },
+    {
+      "name": "James Okafor",
+      "role": "Partner · Operations",
+      "order": 1
+    },
+    {
+      "name": "Diana Kovac",
+      "role": "Partner · Organisation",
+      "order": 2
+    },
+    {
+      "name": "Mark Lindgren",
+      "role": "Partner · Capability",
+      "order": 3
+    }
+  ],
+  "social_links": [
+    {
+      "platform": "linkedin",
+      "label": "LinkedIn",
+      "url": "https://linkedin.com/company/northwell-partners",
+      "order": 0
+    },
+    {
+      "platform": "email",
+      "label": "Email a partner",
+      "url": "mailto:engage@northwell.example",
+      "order": 1
+    }
+  ]
+}

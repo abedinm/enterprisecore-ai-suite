@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { ArrowDown, ArrowUp, ArrowRightLeft, RotateCw, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api } from '../../lib/api';
-import { formatCurrency } from '../../lib/utils';
+import { formatCurrency, formatNumber } from '../../lib/utils';
 import { Product, StockMovement, StockOnHand, Warehouse, STATUS_BADGE, STOCK_MOVEMENT_TYPES } from './types';
 
 export function StockManagerTab() {
@@ -55,7 +55,7 @@ export function StockManagerTab() {
       </div>
 
       <div className="grid gap-3 md:grid-cols-4">
-        <StatCard label="Total units on hand" value={totalUnits.toLocaleString()} />
+        <StatCard label="Total units on hand" value={formatNumber(totalUnits)} />
         <StatCard label="Inventory value" value={formatCurrency(totalValue)} />
         <StatCard label="Low stock" value={lowCount} accent={lowCount > 0 ? 'amber' : undefined} />
         <StatCard label="Out of stock" value={outCount} accent={outCount > 0 ? 'rose' : undefined} />

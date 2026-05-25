@@ -1,0 +1,20 @@
+apiVersion: v2
+name: enterprisecore
+description: EnterpriseCore AI Suite — offline-first business suite + AI coding assistant.
+type: application
+version: 0.1.0
+appVersion: "0.6.0"
+home: https://github.com/enterprisecore/ai-suite
+sources:
+  - https://github.com/enterprisecore/ai-suite
+keywords:
+  - business-suite
+  - ai
+  - self-hosted
+  - fastapi
+  - react
+maintainers:
+  - name: EnterpriseCore Team
+annotations:
+  category: ApplicationServer
+  licenses: Apache-2.0

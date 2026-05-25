@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: enterprisecore-backend-data
+  labels:
+    app.kubernetes.io/name: enterprisecore
+    app.kubernetes.io/component: backend
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 20Gi
+  # Uncomment to pin a storage class
+  # storageClassName: standard

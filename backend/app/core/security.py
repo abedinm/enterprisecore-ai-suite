@@ -16,12 +16,52 @@ from passlib.context import CryptContext
 from app.core.config import settings
 from app.core.exceptions import AuthenticationError, ValidationFailed
 
+__all__ = [
+    "verify_password",
+    "verify_and_maybe_rehash",
+    "hash_password",
+    "create_access_token",
+    "create_refresh_token",
+    "decode_token",
+    "hash_refresh_token",
+    "verify_refresh_token",
+]
+
 ALGORITHM = "HS256"
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Password hashing — argon2id by default (OWASP 2024 recommendation), with
+# bcrypt kept around so users hashed before the upgrade still verify. When a
+# bcrypt-hashed user logs in we transparently rehash with argon2id; passlib's
+# ``needs_update`` flags any scheme that isn't the first in the list. The
+# rehash happens at the call site (see ``verify_and_maybe_rehash`` below).
+#
+# argon2 parameters target ~50ms on modern server CPUs:
+#   memory=65536 KiB (64 MiB), time=3, parallelism=4
+# These are the OWASP 2024 minimums; tune up if the host has spare RAM.
+pwd_context = CryptContext(
+    schemes=["argon2", "bcrypt"],
+    deprecated="auto",
+    argon2__memory_cost=65536,
+    argon2__time_cost=3,
+    argon2__parallelism=4,
+)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Constant-time verify against any supported scheme (argon2 / bcrypt)."""
     return pwd_context.verify(plain_password, hashed_password)
+
+
+def verify_and_maybe_rehash(plain_password: str, hashed_password: str) -> tuple[bool, str | None]:
+    """Verify *plain_password* and, if the stored hash is using a deprecated
+    scheme (e.g. bcrypt after the argon2id upgrade), return a fresh hash so
+    the caller can persist it. Returns ``(ok, new_hash_or_None)``.
+    """
+    ok = pwd_context.verify(plain_password, hashed_password)
+    if not ok:
+        return False, None
+    if pwd_context.needs_update(hashed_password):
+        return True, pwd_context.hash(plain_password)
+    return True, None
 
 
 def hash_password(password: str) -> str:

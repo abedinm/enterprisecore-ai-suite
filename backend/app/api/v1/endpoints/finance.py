@@ -74,6 +74,7 @@ from app.schemas.finance import (
 )
 from app.services import finance as fin
 from app.services.audit import record_audit
+from app.services.event_bus import publish_event
 
 router = APIRouter()
 
@@ -287,6 +288,25 @@ def create_invoice(payload: InvoiceIn, db: Session = Depends(get_db),
     _audit(db, user, "create", "invoice", inv.id, {"number": inv.invoice_number, "total": str(inv.total)})
     db.commit()
     db.refresh(inv)
+    publish_event(
+        "finance.invoice.created",
+        payload={"invoice_id": inv.id, "number": inv.invoice_number, "total": str(inv.total)},
+        user_id=user.id,
+    )
+    # Gamification — first/10/100 invoice milestones. Best-effort.
+    try:
+        from app.services import gamification as _gam
+        from sqlalchemy import func, select as _select
+        from app.models.finance import Invoice as _Invoice
+        count = db.scalar(_select(func.count(_Invoice.id))) or 0
+        if count >= 1:
+            _gam.award(db, tenant_id=user.tenant_id, user_id=user.id, key="first_invoice")
+        if count >= 10:
+            _gam.award(db, tenant_id=user.tenant_id, user_id=user.id, key="ten_invoices")
+        if count >= 100:
+            _gam.award(db, tenant_id=user.tenant_id, user_id=user.id, key="hundred_invoices")
+    except Exception:  # pragma: no cover
+        pass
     return _invoice_to_out(inv)
 
 
@@ -337,6 +357,18 @@ def set_invoice_status(iid: str, payload: InvoiceStatusUpdate, db: Session = Dep
            {"from": previous, "to": payload.status, "number": inv.invoice_number})
     db.commit()
     db.refresh(inv)
+    if payload.status == "paid" and previous != "paid":
+        publish_event(
+            "finance.invoice.paid",
+            payload={"invoice_id": inv.id, "number": inv.invoice_number, "total": str(inv.total)},
+            user_id=user.id,
+        )
+    elif payload.status == "overdue" and previous != "overdue":
+        publish_event(
+            "finance.invoice.overdue",
+            payload={"invoice_id": inv.id, "number": inv.invoice_number, "total": str(inv.total)},
+            user_id=user.id,
+        )
     return _invoice_to_out(inv)
 
 

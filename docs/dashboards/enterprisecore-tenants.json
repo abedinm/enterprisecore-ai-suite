@@ -1,0 +1,150 @@
+{
+  "title": "EnterpriseCore — Tenants",
+  "uid": "ec-tenants",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "tags": ["enterprisecore", "tenants"],
+  "refresh": "1m",
+  "time": { "from": "now-6h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "query": "prometheus",
+        "current": { "text": "Prometheus", "value": "Prometheus" }
+      },
+      {
+        "name": "tenant",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "${datasource}" },
+        "query": "label_values(ec_tenant_request_rate, tenant_id)",
+        "refresh": 2,
+        "includeAll": true,
+        "multi": true,
+        "label": "Tenant"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Active tenants (24h)",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "count(sum by (tenant_id) (increase(ec_tenant_request_rate[1d])) > 0)"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Total tenants",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+      "targets": [
+        { "refId": "A", "expr": "count(ec_tenant_info)" }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Tenants suspended",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
+      "targets": [
+        { "refId": "A", "expr": "count(ec_tenant_info{status=\"suspended\"})" }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Tenant signups (24h)",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
+      "targets": [
+        { "refId": "A", "expr": "sum(increase(ec_tenant_signups_total[1d]))" }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "table",
+      "title": "Top 20 tenants by request rate",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 10 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "topk(20, sum by (tenant_id) (rate(ec_tenant_request_rate[5m])))",
+          "format": "table",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "table",
+      "title": "Top 20 tenants by AI cost (24h)",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 10 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "topk(20, sum by (tenant_id) (increase(ec_tenant_ai_cost_usd[1d])))",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "currencyUSD" } }
+    },
+    {
+      "id": 7,
+      "type": "table",
+      "title": "Top 20 tenants by storage (bytes)",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "x": 0, "y": 14, "w": 12, "h": 10 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "topk(20, ec_tenant_storage_bytes)",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "bytes" } }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Tenant request rate (selected)",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "x": 12, "y": 14, "w": 12, "h": 10 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (tenant_id) (rate(ec_tenant_request_rate{tenant_id=~\"$tenant\"}[5m]))",
+          "legendFormat": "{{tenant_id}}"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Tenant error rate (5xx)",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "x": 0, "y": 24, "w": 24, "h": 6 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (tenant_id) (rate(ec_tenant_errors_total{status=~\"5..\",tenant_id=~\"$tenant\"}[5m]))",
+          "legendFormat": "{{tenant_id}}"
+        }
+      ]
+    }
+  ]
+}

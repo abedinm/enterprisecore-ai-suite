@@ -1,13 +1,22 @@
-"""Global search.
+"""Global search endpoints.
 
-The SearchIndex table is the canonical store and is kept in sync via SQLAlchemy
-event listeners (see `app.services.search_index`). If the index is empty for a
-given module (e.g. fresh install, or the module hasn't started writing yet)
-this endpoint falls back to scanning the live tables so users still get hits.
+Two API shapes coexist intentionally:
+
+* ``POST /api/v1/search`` — the legacy JSON-body endpoint backed by the
+  ``search_indexes`` regular table. Kept verbatim so the existing tests
+  and any frontend code that hasn't migrated yet keep working.
+* ``GET /api/v1/search`` — the new FTS5-backed endpoint, query-string
+  style. Tenant-scoped, ranked, optionally filtered by entity types.
+  This is what the global search bar should call going forward.
+
+Both flow through the same ``get_current_user`` auth dep and the same
+tenant filter, so cross-tenant leakage is impossible.
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Query
+from typing import Any
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
@@ -19,9 +28,15 @@ from app.models.finance import Customer, Invoice
 from app.models.projects import Project, Task
 from app.models.user import SearchHistory, SearchIndex, User
 from app.schemas.foundation import SearchHistoryItem, SearchHit, SearchRequest, SearchResponse
+from app.services import search as fts_search
 from app.services.search_index import rebuild_index
 
 router = APIRouter()
+
+# Max accepted query length. Anything longer is truncated by
+# fts_search.search() — we mirror the cap here so we can fail fast with a
+# clearer error message on the GET endpoint.
+MAX_QUERY_LEN = 200
 
 
 def _like(term: str) -> str:
@@ -88,6 +103,11 @@ def _fallback_hits(db: Session, payload: SearchRequest) -> list[SearchHit]:
 
 @router.post("", response_model=SearchResponse)
 def search(payload: SearchRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """Legacy LIKE-based search against the SearchIndex regular table.
+
+    Kept for backwards compatibility with the existing frontend and tests.
+    New callers should use the GET endpoint below, which is FTS5-backed.
+    """
     term = _like(payload.query)
     items: list[SearchHit] = []
 
@@ -117,16 +137,118 @@ def search(payload: SearchRequest, db: Session = Depends(get_db), current_user: 
     return SearchResponse(items=items, total=len(items), query=payload.query)
 
 
+# ---------------------------------------------------------------------------
+# FTS5-backed GET endpoint (the new path).
+# ---------------------------------------------------------------------------
+
+
+def _maybe_load_full(db: Session, results: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Best-effort lazy load of the source rows referenced by FTS5 results.
+
+    Caller opts in via ``?include=full`` because the round-trip is one
+    SELECT per distinct entity_type, which can be wasteful when the user
+    just wants a list of links.
+    """
+    # Group ids by entity_type so we issue one query per type.
+    grouped: dict[str, list[str]] = {}
+    for r in results:
+        grouped.setdefault(r["entity_type"], []).append(r["entity_id"])
+
+    fetched: dict[tuple[str, str], dict[str, Any]] = {}
+    for entity_type, ids in grouped.items():
+        # Look up the model in the FTS adapter map by entity_type.
+        model = next(
+            (m for m, a in fts_search.FTS_ADAPTERS.items() if a.entity_type == entity_type),
+            None,
+        )
+        if model is None or not ids:
+            continue
+        try:
+            rows = db.scalars(select(model).where(model.id.in_(ids))).all()
+        except Exception:
+            rows = []
+        for row in rows:
+            fetched[(entity_type, row.id)] = {
+                col.name: getattr(row, col.name, None)
+                for col in model.__table__.columns
+                if col.name not in {"password_hash"}
+            }
+
+    enriched: list[dict[str, Any]] = []
+    for r in results:
+        full = fetched.get((r["entity_type"], r["entity_id"]))
+        if full is not None:
+            # ORM rows can contain non-JSON values (Decimal, date, datetime);
+            # let FastAPI's encoder handle them — set them on a copy.
+            r = {**r, "full": full}
+        enriched.append(r)
+    return enriched
+
+
+@router.get("")
+def search_fts(
+    q: str = Query(..., min_length=1, description="Search query"),
+    types: str | None = Query(
+        None,
+        description="Comma-separated entity types (e.g. crm.contact,finance.invoice)",
+    ),
+    limit: int = Query(20, ge=1, le=100),
+    include: str | None = Query(
+        None, description="Set to 'full' to lazily fetch full entity payloads",
+    ),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Full-text search across every indexed entity type, scoped to the
+    caller's tenant.
+
+    Returns a flat list of ranked results — the frontend groups by
+    ``entity_type`` for display. ``rank`` is positive-larger-better.
+    """
+    q_stripped = (q or "").strip()
+    if not q_stripped:
+        # Pydantic min_length=1 catches empty/missing, but a whitespace-only
+        # value sneaks through; reject it explicitly for a clearer error.
+        raise HTTPException(status_code=400, detail="Query must not be empty")
+    if len(q_stripped) > MAX_QUERY_LEN:
+        q_stripped = q_stripped[:MAX_QUERY_LEN]
+
+    entity_types: list[str] = []
+    if types:
+        entity_types = [t.strip() for t in types.split(",") if t.strip()]
+
+    results = fts_search.search(
+        db,
+        q_stripped,
+        entity_types=entity_types or None,
+        limit=limit,
+    )
+    if include == "full":
+        results = _maybe_load_full(db, results)
+
+    # Best-effort history capture; never let it fail the request.
+    try:
+        db.add(SearchHistory(
+            user_id=current_user.id, query=q_stripped, result_count=len(results)
+        ))
+        db.commit()
+    except Exception:
+        db.rollback()
+
+    return {"results": results, "total": len(results), "query": q_stripped}
+
+
 @router.post("/reindex")
 def reindex(db: Session = Depends(get_db), _: User = Depends(get_current_user)) -> dict:
-    """Re-project every indexed model into SearchIndex from scratch.
+    """Rebuild both the regular SearchIndex *and* the FTS5 virtual table.
 
-    Returns count and rebuilds in the request thread; for large datasets this
-    should be moved to a background job — but for the offline-first single-user
-    deployment this targets, a synchronous rebuild is fine.
+    Runs synchronously in the request thread. For the offline-first
+    single-tenant deploys this targets, a sync rebuild is fine; multi-tenant
+    SaaS deploys should call this from a background worker.
     """
     count = rebuild_index(db)
-    return {"indexed": count}
+    fts_count = fts_search.reindex_all(db)
+    return {"indexed": count, "fts_indexed": fts_count}
 
 
 @router.get("/history", response_model=list[SearchHistoryItem])

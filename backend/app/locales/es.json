@@ -1,0 +1,16 @@
+{
+  "errors.invalid_credentials": "Correo o contraseña inválidos",
+  "errors.not_authenticated": "No autenticado",
+  "errors.user_inactive": "La cuenta de usuario está inactiva o no existe",
+  "errors.permission_denied": "No tiene permiso para realizar esta acción",
+  "errors.not_found": "{entity} no encontrado",
+  "errors.conflict_email": "Ya existe un usuario con este correo",
+  "errors.mfa_required": "Se requiere código MFA",
+  "errors.mfa_invalid": "Código MFA inválido",
+  "errors.feature_unavailable": "La función '{feature}' no está incluida en el plan actual.",
+  "errors.required_field": "{field} es obligatorio",
+  "errors.invalid_locale": "Idioma no admitido '{locale}'",
+  "ok.saved": "Guardado",
+  "ok.deleted": "Eliminado",
+  "errors.csrf_failed": "Tu sesión necesita actualizarse — recarga la página e inténtalo de nuevo."
+}

@@ -1,0 +1,110 @@
+# EnterpriseCore AI Suite — local dev / small self-host stack.
+#
+# Usage:
+#   docker compose up -d                 # foreground services + Postgres
+#   docker compose --profile ollama up   # also start a local Ollama
+#   docker compose logs -f backend       # tail backend
+#
+# Production self-host: pair this file with a reverse proxy (Caddy, Traefik,
+# or nginx on the host) that terminates TLS in front of the `frontend`
+# service. See docs/SELF_HOSTING.md.
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: enterprisecore-backend:local
+    environment:
+      APP_ENV: production
+      DB_BACKEND: postgres
+      POSTGRES_DSN: postgresql+psycopg2://ec:${POSTGRES_PASSWORD:-ec_password}@db:5432/enterprisecore
+      OLLAMA_HOST: http://ollama:11434
+      LOG_FORMAT: json
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080}
+      # Generated on first boot if blank; set explicitly in production.
+      SECRET_KEY: ${SECRET_KEY:-}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+    volumes:
+      - ec-data:/data
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8765:8765"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8765/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: nginx.Dockerfile
+    image: enterprisecore-frontend:local
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/healthz"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ec
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ec_password}
+      POSTGRES_DB: enterprisecore
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ec -d enterprisecore"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Optional local LLM. Enable with `--profile ollama`.
+  # Requires NVIDIA Container Toolkit on the host for GPU support; remove the
+  # `deploy.resources.reservations.devices` block to run CPU-only.
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["ollama"]
+    volumes:
+      - ollama-data:/root/.ollama
+    ports:
+      - "11434:11434"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: ["gpu"]
+    restart: unless-stopped
+
+volumes:
+  ec-data:
+  pg-data:
+  redis-data:
+  ollama-data:

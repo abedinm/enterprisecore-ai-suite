@@ -4,6 +4,77 @@ import { api, type ModuleGroup } from '../../lib/api';
 import { useAuthStore } from '../../store/auth';
 import { useOnline } from '../../hooks/useOnline';
 import { formatCurrency, formatNumber } from '../../lib/utils';
+import { OnboardingChecklist, type OnboardingStep } from '../../components/OnboardingChecklist';
+import { Counter, FadeIn, Stagger } from '../../components/motion';
+import { LevelMeter } from '../../components/gamification/LevelMeter';
+import { StreakChip } from '../../components/gamification/StreakChip';
+import { TipOfTheDay } from '../../components/TipOfTheDay';
+
+// Default first-run onboarding for the Core SKU. Each step's ``isDone`` returns
+// a Promise<boolean>; the checklist auto-ticks when the prerequisite becomes
+// true (e.g. a customer is created in another tab).
+const DEFAULT_ONBOARDING_STEPS: OnboardingStep[] = [
+  {
+    id: 'invite-user',
+    label: 'Invite a teammate',
+    description: 'Open Organisation → Users and send your first invite.',
+    to: '/org/users',
+    isDone: async () => {
+      try {
+        const r = await api.get<unknown[]>('/users');
+        return Array.isArray(r.data) && r.data.length > 1;
+      } catch { return false; }
+    },
+  },
+  {
+    id: 'create-customer',
+    label: 'Add your first customer',
+    description: 'Finance → Customers. Sets you up to invoice in minutes.',
+    to: '/finance?tab=customers',
+    isDone: async () => {
+      try {
+        const r = await api.get<unknown[]>('/finance/customers');
+        return Array.isArray(r.data) && r.data.length > 0;
+      } catch { return false; }
+    },
+  },
+  {
+    id: 'send-invoice',
+    label: 'Send your first invoice',
+    description: 'Pick a customer, set an amount, hit Send.',
+    to: '/finance?tab=invoices',
+    isDone: async () => {
+      try {
+        const r = await api.get<unknown[]>('/finance/invoices');
+        return Array.isArray(r.data) && r.data.length > 0;
+      } catch { return false; }
+    },
+  },
+  {
+    id: 'add-employee',
+    label: 'Add an employee record',
+    description: 'HR → Employees. Even one record unlocks the org chart.',
+    to: '/hr?tab=employees',
+    isDone: async () => {
+      try {
+        const r = await api.get<unknown[]>('/hr/employees');
+        return Array.isArray(r.data) && r.data.length > 0;
+      } catch { return false; }
+    },
+  },
+  {
+    id: 'enable-mfa',
+    label: 'Enable multi-factor auth',
+    description: 'Settings → Security. Protects your tenant from credential theft.',
+    to: '/settings?tab=security',
+    isDone: async () => {
+      try {
+        const r = await api.get<{ enabled: boolean }>('/auth/mfa/status');
+        return Boolean(r.data?.enabled);
+      } catch { return false; }
+    },
+  },
+];
 
 type Kpi = { label: string; value: number; format: 'currency' | 'number' };
 
@@ -33,7 +104,7 @@ export function DashboardPage() {
             {greeting()}, {user?.full_name?.split(' ')[0] ?? 'there'}.
           </h1>
           <p className="mt-1 max-w-2xl text-sm text-ink-muted">
-            Everything your business needs — running locally on this machine. Add the modules you need, ignore the rest.
+            {moodLine()}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -45,25 +116,60 @@ export function DashboardPage() {
         </div>
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <TipOfTheDay />
+
+      <OnboardingChecklist steps={DEFAULT_ONBOARDING_STEPS} />
+
+      <Stagger className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {isLoading ? (
           [0, 1, 2, 3].map((i) => (
-            <div key={i} className="ec-card h-24 animate-pulse p-5">
-              <div className="h-3 w-20 rounded bg-surface-muted" />
-              <div className="mt-3 h-6 w-32 rounded bg-surface-muted" />
-            </div>
+            <FadeIn key={i}>
+              <div className="ec-card-static h-24 p-5">
+                <div className="ec-shimmer h-3 w-20 rounded" />
+                <div className="ec-shimmer mt-3 h-6 w-32 rounded" />
+              </div>
+            </FadeIn>
           ))
         ) : (
-          data?.kpis.map((kpi) => (
-            <div key={kpi.label} className="ec-card p-5">
-              <p className="text-sm text-ink-muted">{kpi.label}</p>
-              <p className="mt-2 text-2xl font-semibold">
-                {kpi.format === 'currency' ? formatCurrency(kpi.value) : formatNumber(kpi.value)}
-              </p>
-            </div>
+          (data?.kpis ?? []).map((kpi) => (
+            <FadeIn key={kpi.label}>
+              <div className="ec-card-gradient p-5 ec-lift cursor-default">
+                <p className="text-sm text-ink-muted">{kpi.label}</p>
+                <p className="mt-2 text-2xl font-semibold tabular-nums">
+                  {kpi.format === 'currency' ? (
+                    <Counter
+                      to={kpi.value}
+                      duration={1.1}
+                      format={(v) => formatCurrency(Math.round(v))}
+                    />
+                  ) : (
+                    <Counter
+                      to={kpi.value}
+                      duration={1.1}
+                      format={(v) => formatNumber(Math.round(v))}
+                    />
+                  )}
+                </p>
+              </div>
+            </FadeIn>
           ))
         )}
-      </section>
+      </Stagger>
+
+      {/* Gamification strip — level meter + streak. Renders gracefully even
+          when the gamification fetch hasn't returned yet. */}
+      <FadeIn>
+        <section className="grid gap-4 sm:grid-cols-[1fr_auto]">
+          <LevelMeter />
+          <div className="ec-card-static flex items-center gap-3 p-4">
+            <div className="text-sm">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">Streak</p>
+              <p className="text-ink">Keep the rhythm going.</p>
+            </div>
+            <StreakChip />
+          </div>
+        </section>
+      </FadeIn>
 
       <section className="grid gap-4 xl:grid-cols-[1fr_360px]">
         <div className="ec-card p-5">
@@ -126,7 +232,23 @@ export function DashboardPage() {
 
 function greeting(): string {
   const hour = new Date().getHours();
+  if (hour < 5)  return 'Burning the midnight oil';
   if (hour < 12) return 'Good morning';
-  if (hour < 18) return 'Good afternoon';
-  return 'Good evening';
+  if (hour < 17) return 'Good afternoon';
+  if (hour < 21) return 'Good evening';
+  return 'Working late';
+}
+
+/** Sub-line that picks a tiny mood line based on time + day-of-week. */
+function moodLine(): string {
+  const d = new Date();
+  const dow = d.getDay();          // 0 = Sunday
+  const hour = d.getHours();
+  if (dow === 1 && hour < 12)  return 'Fresh start. One step at a time.';
+  if (dow === 5 && hour >= 15) return 'Friday wind-down — finish strong.';
+  if (dow === 0 || dow === 6)  return 'A quiet weekend session.';
+  if (hour < 9)                return 'Quiet morning — perfect for clearing the inbox.';
+  if (hour >= 21)              return 'Late shift. We see you.';
+  if (hour >= 14 && hour < 16) return 'Post-lunch focus block.';
+  return "Let's make today count.";
 }

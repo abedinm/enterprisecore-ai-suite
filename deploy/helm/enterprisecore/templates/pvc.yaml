@@ -1,0 +1,21 @@
+{{- if .Values.backend.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "enterprisecore.backend.fullname" . }}-data
+  labels:
+    {{- include "enterprisecore.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+  annotations:
+    # Keep the data around even after `helm uninstall`.
+    helm.sh/resource-policy: keep
+spec:
+  accessModes:
+    - {{ .Values.backend.persistence.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.backend.persistence.size }}
+  {{- if .Values.backend.persistence.storageClass }}
+  storageClassName: {{ .Values.backend.persistence.storageClass | quote }}
+  {{- end }}
+{{- end }}

@@ -25,6 +25,7 @@ from app.schemas.hr import (
 )
 from app.services import hr as hr_svc
 from app.services.audit import record_audit
+from app.services.event_bus import publish_event
 
 router = APIRouter()
 
@@ -72,6 +73,11 @@ def create_employee(payload: EmployeeIn, db: Session = Depends(get_db),
            {"name": obj.full_name, "code": obj.employee_code})
     db.commit()
     db.refresh(obj)
+    publish_event(
+        "hr.employee.created",
+        payload={"employee_id": obj.id, "code": obj.employee_code, "name": obj.full_name},
+        user_id=user.id,
+    )
     return obj
 
 
@@ -195,6 +201,12 @@ def decide_leave(lid: str, payload: LeaveDecision, db: Session = Depends(get_db)
     _audit(db, user, "decision", "leave", obj.id, {"status": payload.status})
     db.commit()
     db.refresh(obj)
+    if payload.status == "approved":
+        publish_event(
+            "hr.leave.approved",
+            payload={"leave_id": obj.id, "employee_id": obj.employee_id},
+            user_id=user.id,
+        )
     return obj
 
 

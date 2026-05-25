@@ -25,6 +25,8 @@ license.key
 backend/storage/uploads/*
 backend/storage/backups/*
 backend/storage/reports/*
+backend/storage/imports/
+backend/storage/knowledge/
 backend/storage/logs/
 backend/storage/*.db
 backend/storage/*.db-journal
@@ -61,3 +63,66 @@ backend/uvicorn.*.log
 backend/.coverage
 htmlcov/
 coverage.xml
+
+# --- Appended by CI/CD setup ---------------------------------------------
+
+# Python — extra
+*.pyc
+*.pyo
+
+# Node — extra
+.next/
+.turbo/
+.cache/
+.parcel-cache/
+.eslintcache
+*.tsbuildinfo
+
+# Electron installer artifacts (binaries)
+*.exe
+*.msi
+*.dmg
+*.AppImage
+*.deb
+*.rpm
+*.snap
+electron/dist-build.log
+electron/app-*.log
+electron/be*.log
+
+# Backend native build artifacts
+backend/build/
+backend/dist/
+backend/*.spec.bak
+backend/pyinstaller.log
+backend/pytest-*.log
+backend/uvicorn.err.log
+backend/uvicorn.out.log
+backend/app-*.log
+
+# Editor / IDE
+.vscode/settings.json
+.vscode/launch.json
+.idea/
+*.iml
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs / tmp
+*.log
+/tmp/
+/storage/
+.pid
+
+# SBOM artifacts produced by release pipeline
+*.cdx.json
+sbom-*.json
+
+# OpenAPI auto-export
+docs/openapi.json
+

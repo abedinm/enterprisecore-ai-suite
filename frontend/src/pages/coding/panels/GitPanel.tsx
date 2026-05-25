@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowDownCircle, ArrowUpCircle, FilePlus, FileX, GitBranch, GitCommit, GitMerge, Loader2, Plus, RefreshCw, Square, SquareCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { cn } from '../../../lib/utils';
+import { cn, formatDateTime } from '../../../lib/utils';
 import { MonacoView } from '../EditorTabs';
 import {
   gitBranches, gitCheckout, gitCommit, gitDiff, gitInit, gitLog,
@@ -279,7 +279,7 @@ function LogPane({ commits, loading }: { commits: { sha: string; full_sha: strin
             <li key={c.full_sha} className="rounded border border-border p-2">
               <div className="flex items-center gap-2 text-[10px] text-ink-subtle">
                 <code>{c.sha}</code>
-                <span className="ml-auto">{new Date(c.date).toLocaleString()}</span>
+                <span className="ml-auto">{formatDateTime(c.date)}</span>
               </div>
               <p className="mt-1 font-medium">{c.message}</p>
               <p className="text-[10px] text-ink-muted">{c.author}</p>

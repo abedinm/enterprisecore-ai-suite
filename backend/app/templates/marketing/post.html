@@ -1,0 +1,24 @@
+{% extends "marketing/base.html" %}
+{% block title %}{{ post.seo_title or post.title }} — {{ settings.name }}{% endblock %}
+{% block content %}
+<div class="container">
+  <article class="section post">
+    <p><a href="/site/blog">&larr; Back to journal</a></p>
+    {% if post.category %}<div class="eyebrow">{{ post.category }}</div>{% endif %}
+    <h1>{{ post.title }}</h1>
+    {% if post.publish_date %}<p class="meta">{{ post.publish_date.strftime('%B %d, %Y') }}{% if post.author %} · {{ post.author }}{% endif %}</p>{% endif %}
+    {% for para in body_paragraphs %}
+      {% if para.startswith('## ') %}
+        <h2>{{ para[3:] }}</h2>
+      {% elif para.startswith('# ') %}
+        <h2>{{ para[2:] }}</h2>
+      {% else %}
+        <p>{{ para }}</p>
+      {% endif %}
+    {% endfor %}
+    {% if post.tags %}
+      <p>{% for tag in post.tags %}<span class="tag">{{ tag }}</span>{% endfor %}</p>
+    {% endif %}
+  </article>
+</div>
+{% endblock %}

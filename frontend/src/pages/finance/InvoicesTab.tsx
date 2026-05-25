@@ -173,7 +173,22 @@ function InvoiceForm({ customers, editing, onSaved, onCancel }: { customers: Cus
       }
       return (await api.post('/finance/invoices', body)).data;
     },
-    onSuccess: onSaved,
+    onSuccess: async () => {
+      // Celebrate on CREATE (not edit). The server-side first/10/100 milestone
+      // achievements will also surface their own celebration via the
+      // gamification refresh; this is the immediate visual reward.
+      if (!editing) {
+        try {
+          const { popConfetti } = await import('../../lib/celebrate');
+          popConfetti();
+        } catch { /* never block on celebration */ }
+        try {
+          const { useGamification } = await import('../../store/gamification');
+          useGamification.getState().refresh();
+        } catch { /* noop */ }
+      }
+      onSaved();
+    },
   });
 
   return (

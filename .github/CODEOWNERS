@@ -1,0 +1,23 @@
+# Code Owners for EnterpriseCore AI Suite
+#
+# These owners will be the default reviewers for everything in the repo.
+# Replace @REPLACE_WITH_GITHUB_USERNAME with the real GitHub handle before
+# enabling branch protection that requires reviews.
+
+* @REPLACE_WITH_GITHUB_USERNAME
+
+# Backend
+/backend/                @REPLACE_WITH_GITHUB_USERNAME
+
+# Frontend
+/frontend/               @REPLACE_WITH_GITHUB_USERNAME
+
+# Desktop wrapper
+/electron/               @REPLACE_WITH_GITHUB_USERNAME
+
+# CI/CD + repo automation
+/.github/                @REPLACE_WITH_GITHUB_USERNAME
+
+# Security policy and release docs
+/SECURITY.md             @REPLACE_WITH_GITHUB_USERNAME
+/docs/RELEASE_PROCESS.md @REPLACE_WITH_GITHUB_USERNAME

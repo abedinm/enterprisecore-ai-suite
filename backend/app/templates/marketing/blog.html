@@ -1,0 +1,23 @@
+{% extends "marketing/base.html" %}
+{% block title %}Journal — {{ settings.name }}{% endblock %}
+{% block content %}
+<div class="container">
+  <section class="section">
+    <h1>Journal</h1>
+    {% if not posts %}
+      <p class="meta">No posts have been published yet.</p>
+    {% endif %}
+    <div class="grid grid-2">
+      {% for post in posts %}
+        <article class="card">
+          {% if post.category %}<div class="eyebrow">{{ post.category }}</div>{% endif %}
+          <h2><a href="/site/blog/{{ post.slug }}">{{ post.title }}</a></h2>
+          {% if post.publish_date %}<p class="meta">{{ post.publish_date.strftime('%B %d, %Y') }}{% if post.author %} · {{ post.author }}{% endif %}</p>{% endif %}
+          {% if post.excerpt %}<p>{{ post.excerpt }}</p>{% endif %}
+          <p><a href="/site/blog/{{ post.slug }}">Read more &rarr;</a></p>
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}

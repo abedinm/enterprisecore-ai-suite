@@ -132,3 +132,45 @@ class RateLimit:
                 code="rate_limited",
                 status_code=429,
             )
+
+
+# ---------------------------------------------------------------------------
+# Convenience factory for per-module write limits
+# ---------------------------------------------------------------------------
+# Each business module (finance, hr, crm, ...) gets its own write bucket so a
+# burst against one module doesn't starve writes against another. The default
+# allowance of 60/minute is generous for normal operator use but still tight
+# enough to slow down a stolen-token enumeration attack.
+DEFAULT_WRITE_RULE = "60/minute"
+
+# Methods considered "writes" for the per-module limiter. GET and HEAD pass
+# through untouched — reads are governed at the app level (or not at all).
+_WRITE_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
+
+
+class WriteRateLimit(RateLimit):
+    """Rate-limiter that only counts mutation requests (POST/PUT/PATCH/DELETE).
+
+    Designed to be applied at router level as a single dependency::
+
+        router = APIRouter(dependencies=[Depends(WriteRateLimit("finance"))])
+
+    GETs and HEADs are no-ops so list/detail endpoints aren't affected. The
+    bucket id is ``<module>-write`` so every mutation across the module
+    shares one sliding window — which is the right behaviour for blocking
+    stolen-token enumeration sprees.
+    """
+
+    def __init__(self, module: str, *, rule: str = DEFAULT_WRITE_RULE):
+        super().__init__(rule, id=f"{module}-write")
+        self.module = module
+
+    def __call__(self, http_req: Request) -> None:  # type: ignore[override]
+        if http_req.method.upper() not in _WRITE_METHODS:
+            return
+        super().__call__(http_req)
+
+
+def write_rate_limit(module: str, *, rule: str = DEFAULT_WRITE_RULE) -> "WriteRateLimit":
+    """Return a ``WriteRateLimit`` for ``module``. See class docstring."""
+    return WriteRateLimit(module, rule=rule)

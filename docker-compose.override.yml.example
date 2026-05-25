@@ -1,0 +1,43 @@
+# Copy to docker-compose.override.yml for development overrides.
+#
+# Compose auto-merges this file on top of docker-compose.yml. Things tuned
+# here: source mounts for hot reload, exposed DB port, debug logging.
+
+services:
+  backend:
+    # Skip the multi-stage build; install deps locally and mount source for
+    # uvicorn --reload. Comment out if you'd rather rebuild the image.
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      APP_ENV: development
+      APP_DEBUG: "true"
+      LOG_FORMAT: text
+      CORS_ORIGINS: http://localhost:5173,http://localhost:8080
+    volumes:
+      - ./backend:/app/backend
+      - ec-data:/data
+    command:
+      - python
+      - -m
+      - uvicorn
+      - app.main:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8765"
+      - --reload
+    ports:
+      - "8765:8765"
+
+  frontend:
+    # In dev you usually run `npm run dev` on the host instead. Comment the
+    # frontend service out entirely if so, or override the image to run the
+    # Vite dev server.
+    command: ["nginx", "-g", "daemon off;"]
+
+  db:
+    # Expose Postgres on the host so psql / DBeaver can connect.
+    ports:
+      - "5432:5432"

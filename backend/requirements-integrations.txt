@@ -1,0 +1,12 @@
+# Optional third-party integration SDKs.
+#
+# Installed by deployments that want the *full* Google Workspace
+# functionality (Calendar event creation, Drive Sheet writes). Without
+# these, the OAuth install dance still works and tokens still persist;
+# event handlers degrade gracefully and skip the Google API call with a
+# warning logged.
+#
+# The Slack + Zapier connectors do NOT need anything from this file —
+# they speak raw HTTPS via httpx (already in requirements.txt).
+google-auth>=2.27.0
+google-api-python-client>=2.110.0

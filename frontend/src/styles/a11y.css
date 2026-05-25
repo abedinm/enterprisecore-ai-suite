@@ -1,0 +1,119 @@
+/* ---------------------------------------------------------------------------
+ * Accessibility utilities. Imported once from index.css and applied globally.
+ *
+ *   .sr-only             — visually hide content but keep it in the
+ *                          accessibility tree (used by screen readers).
+ *   .skip-link           — "Skip to content" anchor that appears only when
+ *                          focused with a keyboard. First focusable element
+ *                          in AppShell so Tab lands here before the sidebar.
+ *   :focus-visible       — 3px brand ring on every focusable element so
+ *                          keyboard users always see what's focused. Mouse
+ *                          clicks don't trigger it (per WCAG 2.4.7).
+ *   prefers-reduced-motion
+ *                        — kill transitions for users who request it.
+ *   prefers-contrast: more
+ *                        — thicken borders + outlines for low-vision users.
+ * ------------------------------------------------------------------------- */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 100;
+  padding: 0.625rem 1rem;
+  background: rgb(var(--color-surface-elevated));
+  color: rgb(var(--color-ink));
+  font-weight: 600;
+  font-size: 0.875rem;
+  border-radius: 0 0 0.5rem 0;
+  border: 2px solid rgb(var(--color-border));
+  transform: translateY(-200%);
+  transition: transform 120ms ease-out;
+}
+.skip-link:focus,
+.skip-link:focus-visible {
+  transform: translateY(0);
+  outline: 3px solid rgb(var(--color-brand-500, 96 165 250));
+  outline-offset: 2px;
+}
+
+/* Brand-coloured focus ring on every interactive element when a keyboard
+ * focuses it. Mouse clicks emit :focus but NOT :focus-visible, so this
+ * stays out of the way for pointer users. */
+*:focus-visible {
+  outline: 3px solid rgb(var(--color-brand-500, 96 165 250));
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Inputs already carry their own brand-coloured border on :focus; we keep
+ * :focus-visible's outline as the canonical signal across all controls. */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+[tabindex="0"]:focus-visible {
+  outline: 3px solid rgb(var(--color-brand-500, 96 165 250));
+  outline-offset: 2px;
+}
+
+/* Reduced motion — globally disable transitions/animations. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* High-contrast — thicker borders so low-vision users can see card edges. */
+@media (prefers-contrast: more) {
+  .ec-card,
+  .ec-input,
+  .ec-btn-secondary {
+    border-width: 2px;
+  }
+  *:focus-visible {
+    outline-width: 4px;
+  }
+}
+
+/* Touch-target floor — Apple HIG / WCAG 2.5.5 says min 44x44 CSS px. We don't
+ * blanket every <button>; we apply it to controls inside .touch-target-44 to
+ * opt in on small-tap surfaces (icon buttons, sidebar items on mobile). */
+@media (pointer: coarse) {
+  .touch-target-44,
+  .touch-target-44 button,
+  .touch-target-44 a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Loading spinner contract: anything marked role="status" needs a visible
+ * accessible name. We hide the spinner-text visually but keep it for ATs. */
+[role="status"] .spinner-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

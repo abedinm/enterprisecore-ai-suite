@@ -1,0 +1,16 @@
+{
+  "errors.invalid_credentials": "メールアドレスまたはパスワードが無効です",
+  "errors.not_authenticated": "認証されていません",
+  "errors.user_inactive": "ユーザーアカウントが無効または存在しません",
+  "errors.permission_denied": "この操作を実行する権限がありません",
+  "errors.not_found": "{entity} が見つかりません",
+  "errors.conflict_email": "このメールアドレスのユーザーはすでに存在します",
+  "errors.mfa_required": "MFAコードが必要です",
+  "errors.mfa_invalid": "MFAコードが無効です",
+  "errors.feature_unavailable": "機能 '{feature}' は現在のプランに含まれていません。",
+  "errors.required_field": "{field} は必須です",
+  "errors.invalid_locale": "サポートされていない言語 '{locale}'",
+  "ok.saved": "保存しました",
+  "ok.deleted": "削除しました",
+  "errors.csrf_failed": "セッションを更新する必要があります — ページを再読み込みしてください。"
+}

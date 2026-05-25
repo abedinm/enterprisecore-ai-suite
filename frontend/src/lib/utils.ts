@@ -1,48 +1,43 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import {
+  formatCurrency as _fmtCurrency,
+  formatDate as _fmtDate,
+  formatDateTime as _fmtDateTime,
+  formatNumber as _fmtNumber,
+  relativeTime as _relTime,
+} from './format';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-const NUMBER_FMT = new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 });
-
+// Legacy wrappers — delegate to ./format so values track the active i18n
+// locale instead of being pinned to the browser default. Callers keep the
+// same `(string | number)` input shape they always had.
 export function formatNumber(n: number | string | null | undefined): string {
   if (n === null || n === undefined || n === '') return '—';
-  return NUMBER_FMT.format(typeof n === 'string' ? parseFloat(n) : n);
+  const v = typeof n === 'string' ? parseFloat(n) : n;
+  return _fmtNumber(v, undefined, { maximumFractionDigits: 2 });
 }
 
 export function formatCurrency(amount: number | string | null | undefined, currency = 'USD'): string {
   if (amount === null || amount === undefined || amount === '') return '—';
   const value = typeof amount === 'string' ? parseFloat(amount) : amount;
-  try {
-    return new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(value);
-  } catch {
-    return `${currency} ${formatNumber(value)}`;
-  }
+  return _fmtCurrency(value, currency);
 }
 
 export function formatDate(d: string | Date | null | undefined): string {
-  if (!d) return '—';
-  const date = typeof d === 'string' ? new Date(d) : d;
-  return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  return _fmtDate(d ?? null);
 }
 
 export function formatDateTime(d: string | Date | null | undefined): string {
-  if (!d) return '—';
-  const date = typeof d === 'string' ? new Date(d) : d;
-  return date.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  return _fmtDateTime(d ?? null);
 }
 
 export function relativeTime(d: string | Date | null | undefined): string {
   if (!d) return '—';
-  const date = typeof d === 'string' ? new Date(d) : d;
-  const diff = (Date.now() - date.getTime()) / 1000;
-  if (diff < 60) return 'just now';
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  if (diff < 86400 * 7) return `${Math.floor(diff / 86400)}d ago`;
-  return formatDate(date);
+  return _relTime(d) || '—';
 }
 
 export function downloadBlob(blob: Blob, filename: string) {

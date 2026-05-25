@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#4f46e5">
+<title>EnterpriseCore is offline</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%;background:#0c0f16;color:#f0f4f8;font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+  body{display:flex;align-items:center;justify-content:center;padding:24px}
+  .card{max-width:480px;width:100%;background:#181c28;border:1px solid #282e3c;border-radius:16px;padding:32px;text-align:center;box-shadow:0 24px 48px rgba(0,0,0,.4)}
+  .logo{width:64px;height:64px;margin:0 auto 16px;display:grid;place-items:center;background:#4f46e5;border-radius:16px;color:#fff;font-weight:700;font-size:24px;letter-spacing:.5px}
+  h1{font-size:22px;font-weight:600;margin:0 0 8px}
+  p{font-size:15px;line-height:1.5;color:#aeb8c6;margin:0 0 24px}
+  button{background:#4f46e5;color:#fff;border:0;border-radius:10px;padding:12px 20px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s}
+  button:hover{background:#4338ca}
+  button:focus{outline:2px solid #a5b4fc;outline-offset:2px}
+  .hint{margin-top:24px;font-size:12px;color:#788192}
+</style>
+</head>
+<body>
+  <main class="card" role="alert" aria-live="polite">
+    <div class="logo" aria-hidden="true">EC</div>
+    <h1>EnterpriseCore is offline</h1>
+    <p>Some features need an internet connection. Anything you've already loaded should still work &mdash; try clicking back.</p>
+    <button type="button" onclick="window.location.reload()">Retry</button>
+    <p class="hint">If the problem persists, check your network or restart the desktop app.</p>
+  </main>
+</body>
+</html>

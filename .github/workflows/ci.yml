@@ -6,50 +6,66 @@ on:
   pull_request:
     branches: [main]
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
-  backend:
-    name: Backend (pytest)
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+  backend-test:
+    name: Backend (pytest) ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python 3.11
+      - name: Set up Python 3.13
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.13"
           cache: pip
-          cache-dependency-path: backend/requirements-dev.txt
+          cache-dependency-path: |
+            backend/requirements.txt
+            backend/requirements-dev.txt
 
       - name: Install backend deps
         working-directory: backend
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements-dev.txt
+          pip install -r requirements.txt
+          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+        shell: bash
 
-      - name: Lint with ruff
-        working-directory: backend
-        run: ruff check app tests || true   # non-fatal until ruff config stabilises
-
-      - name: Run pytest
+      - name: Run pytest with coverage
         working-directory: backend
         env:
           SECRET_KEY: ci-secret-do-not-use-in-prod
           ANTHROPIC_API_KEY: ""
           OPENAI_API_KEY: ""
-        run: pytest -v --tb=short --cov=app --cov-report=xml --cov-report=term
+        run: pytest -q --cov=app --cov-report=xml --cov-report=term --cov-fail-under=70
 
-      - name: Upload coverage
+      - name: Upload coverage XML
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: coverage-xml
+          name: coverage-xml-${{ matrix.os }}
           path: backend/coverage.xml
+          if-no-files-found: warn
 
-  frontend:
-    name: Frontend (typecheck + build)
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+  frontend-build:
+    name: Frontend (build + e2e) ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@v4
 
@@ -71,3 +87,100 @@ jobs:
       - name: Vite production build
         working-directory: frontend
         run: npm run build
+
+      - name: Playwright E2E (if configured)
+        working-directory: frontend
+        run: |
+          if [ -f playwright.config.ts ] || [ -f playwright.config.js ]; then
+            npx playwright install --with-deps chromium
+            npm run test:e2e
+          else
+            echo "Playwright not yet configured; skipping E2E"
+          fi
+        shell: bash
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
+
+      - name: Install Python lint deps
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+          pip install black mypy
+
+      - name: ruff
+        working-directory: backend
+        run: ruff check app tests
+
+      - name: black (check only)
+        working-directory: backend
+        run: black --check app tests || true
+
+      - name: mypy
+        working-directory: backend
+        run: mypy app --ignore-missing-imports || true
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend deps
+        working-directory: frontend
+        run: npm ci
+
+      - name: eslint
+        working-directory: frontend
+        run: npm run lint -- --max-warnings=9999 || true
+
+      - name: prettier (check)
+        working-directory: frontend
+        run: npx prettier --check "src/**/*.{ts,tsx,js,jsx,json,css,md}" || true
+
+  security-scan:
+    name: Security (deps)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: pip-audit (backend)
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip pip-audit
+          pip-audit -r requirements.txt --disable-pip --vulnerability-service osv \
+            --ignore-vuln GHSA-placeholder \
+            --strict
+        continue-on-error: false
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: npm audit (frontend)
+        working-directory: frontend
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: npm audit (electron)
+        working-directory: electron
+        run: npm audit --omit=dev --audit-level=high

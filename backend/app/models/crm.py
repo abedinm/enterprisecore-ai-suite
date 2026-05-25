@@ -6,10 +6,12 @@ from decimal import Decimal
 from sqlalchemy import Date, DateTime, ForeignKey, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, IdMixin, TimestampMixin
+from sqlalchemy import UniqueConstraint
+
+from app.db.base import Base, IdMixin, TenantMixin, TimestampMixin
 
 
-class Contact(IdMixin, TimestampMixin, Base):
+class Contact(IdMixin, TenantMixin, TimestampMixin, Base):
     name: Mapped[str] = mapped_column(String(180), index=True)
     company: Mapped[str | None] = mapped_column(String(180), index=True)
     email: Mapped[str | None] = mapped_column(String(255))
@@ -17,7 +19,7 @@ class Contact(IdMixin, TimestampMixin, Base):
     tags: Mapped[str] = mapped_column(Text, default="[]")
 
 
-class Lead(IdMixin, TimestampMixin, Base):
+class Lead(IdMixin, TenantMixin, TimestampMixin, Base):
     contact_id: Mapped[str | None] = mapped_column(ForeignKey("contacts.id", ondelete="SET NULL"))
     source: Mapped[str | None] = mapped_column(String(120))
     status: Mapped[str] = mapped_column(String(60), default="new", index=True)
@@ -25,7 +27,7 @@ class Lead(IdMixin, TimestampMixin, Base):
     notes: Mapped[str] = mapped_column(Text, default="")
 
 
-class Deal(IdMixin, TimestampMixin, Base):
+class Deal(IdMixin, TenantMixin, TimestampMixin, Base):
     contact_id: Mapped[str | None] = mapped_column(ForeignKey("contacts.id", ondelete="SET NULL"))
     title: Mapped[str] = mapped_column(String(180), index=True)
     stage: Mapped[str] = mapped_column(String(80), default="qualified", index=True)
@@ -34,21 +36,21 @@ class Deal(IdMixin, TimestampMixin, Base):
     expected_close_date: Mapped[date | None] = mapped_column(Date)
 
 
-class FollowUp(IdMixin, TimestampMixin, Base):
+class FollowUp(IdMixin, TenantMixin, TimestampMixin, Base):
     contact_id: Mapped[str | None] = mapped_column(ForeignKey("contacts.id", ondelete="CASCADE"))
     due_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     status: Mapped[str] = mapped_column(String(30), default="open")
     notes: Mapped[str] = mapped_column(Text, default="")
 
 
-class CommunicationEntry(IdMixin, TimestampMixin, Base):
+class CommunicationEntry(IdMixin, TenantMixin, TimestampMixin, Base):
     contact_id: Mapped[str | None] = mapped_column(ForeignKey("contacts.id", ondelete="CASCADE"))
     channel: Mapped[str] = mapped_column(String(40))
     subject: Mapped[str | None] = mapped_column(String(180))
     body: Mapped[str] = mapped_column(Text, default="")
 
 
-class Contract(IdMixin, TimestampMixin, Base):
+class Contract(IdMixin, TenantMixin, TimestampMixin, Base):
     contact_id: Mapped[str | None] = mapped_column(ForeignKey("contacts.id", ondelete="SET NULL"))
     title: Mapped[str] = mapped_column(String(180), index=True)
     status: Mapped[str] = mapped_column(String(40), default="draft")
@@ -56,7 +58,7 @@ class Contract(IdMixin, TimestampMixin, Base):
     file_path: Mapped[str | None] = mapped_column(String(500))
 
 
-class Proposal(IdMixin, TimestampMixin, Base):
+class Proposal(IdMixin, TenantMixin, TimestampMixin, Base):
     contact_id: Mapped[str | None] = mapped_column(ForeignKey("contacts.id", ondelete="SET NULL"))
     title: Mapped[str] = mapped_column(String(180), index=True)
     status: Mapped[str] = mapped_column(String(40), default="draft")
@@ -64,14 +66,15 @@ class Proposal(IdMixin, TimestampMixin, Base):
     body: Mapped[str] = mapped_column(Text, default="")
 
 
-class Quotation(IdMixin, TimestampMixin, Base):
-    quote_number: Mapped[str] = mapped_column(String(60), unique=True, index=True)
+class Quotation(IdMixin, TenantMixin, TimestampMixin, Base):
+    quote_number: Mapped[str] = mapped_column(String(60), index=True)
     contact_id: Mapped[str | None] = mapped_column(ForeignKey("contacts.id", ondelete="SET NULL"))
     status: Mapped[str] = mapped_column(String(40), default="draft")
     total: Mapped[Decimal] = mapped_column(Numeric(14, 2), default=0)
+    __table_args__ = (UniqueConstraint("tenant_id", "quote_number", name="uq_quotations_tenant_number"),)
 
 
-class EmailCampaign(IdMixin, TimestampMixin, Base):
+class EmailCampaign(IdMixin, TenantMixin, TimestampMixin, Base):
     name: Mapped[str] = mapped_column(String(180), index=True)
     status: Mapped[str] = mapped_column(String(40), default="draft")
     sent_count: Mapped[int] = mapped_column(default=0)
@@ -79,6 +82,7 @@ class EmailCampaign(IdMixin, TimestampMixin, Base):
     click_count: Mapped[int] = mapped_column(default=0)
 
 
-class CustomerSegment(IdMixin, TimestampMixin, Base):
-    name: Mapped[str] = mapped_column(String(160), unique=True)
+class CustomerSegment(IdMixin, TenantMixin, TimestampMixin, Base):
+    name: Mapped[str] = mapped_column(String(160))
     rules: Mapped[str] = mapped_column(Text, default="{}")
+    __table_args__ = (UniqueConstraint("tenant_id", "name", name="uq_customer_segments_tenant_name"),)

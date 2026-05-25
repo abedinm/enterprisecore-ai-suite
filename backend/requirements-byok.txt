@@ -1,0 +1,14 @@
+# Optional BYOK (Bring Your Own Key) cloud-KMS dependencies.
+#
+# Installed only by enterprise customers who want their tenant DEK
+# wrapped by their own KMS instead of the EnterpriseCore server master
+# key. The base install does NOT require any of these — see
+# app/core/encryption.py for the fallback behaviour when a provider
+# module isn't importable.
+#
+# Pick the line(s) for the cloud(s) you use:
+boto3>=1.34.0                 # AWS KMS
+google-cloud-kms>=2.20.0      # GCP KMS
+azure-keyvault-keys>=4.8.0    # Azure Key Vault
+azure-identity>=1.15.0        # Azure auth (paired with the line above)
+hvac>=2.0.0                   # HashiCorp Vault Transit

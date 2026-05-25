@@ -304,8 +304,14 @@ def test_call_openai_raises_when_no_key():
     assert exc_info.value.code == "ai_provider_not_configured"
 
 
-def test_call_ollama_raises_when_server_unreachable():
-    """Ollama should raise AppError(ai_provider_unavailable) on connection errors."""
+def test_call_ollama_raises_when_server_unreachable(monkeypatch):
+    """Ollama should raise AppError(ai_provider_unavailable) on connection errors.
+
+    Point the client at a port that is guaranteed not to be listening (port 1
+    is reserved/unused). This makes the test deterministic regardless of
+    whether the developer happens to have a real Ollama daemon running.
+    """
+    monkeypatch.setattr("app.core.config.settings.ollama_host", "http://127.0.0.1:1")
     with pytest.raises(AppError) as exc_info:
         call_ollama(
             [AiMessage(role="user", content="hi")],

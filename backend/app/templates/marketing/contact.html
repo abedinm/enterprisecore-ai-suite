@@ -1,0 +1,26 @@
+{% extends "marketing/base.html" %}
+{% block title %}Contact — {{ settings.name }}{% endblock %}
+{% block content %}
+<div class="container">
+  <section class="section">
+    <h1>Get in touch</h1>
+    <div class="grid grid-2">
+      <div class="card">
+        <h2>Contact</h2>
+        {% if settings.contact_email %}<p><strong>Email</strong><br><a href="mailto:{{ settings.contact_email }}">{{ settings.contact_email }}</a></p>{% endif %}
+        {% if settings.contact_phone %}<p><strong>Phone</strong><br>{{ settings.contact_phone }}</p>{% endif %}
+        {% if settings.contact_address %}<p><strong>Address</strong><br>{{ settings.contact_address }}</p>{% endif %}
+        {% if settings.contact_hours %}<p><strong>Hours</strong><br>{{ settings.contact_hours }}</p>{% endif %}
+      </div>
+      {% if social_links %}
+        <div class="card">
+          <h2>Elsewhere</h2>
+          {% for link in social_links %}
+            <p><a href="{{ link.url }}">{{ link.label or link.platform }}</a></p>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+  </section>
+</div>
+{% endblock %}

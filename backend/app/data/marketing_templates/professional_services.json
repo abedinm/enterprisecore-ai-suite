@@ -1,0 +1,329 @@
+{
+  "id": "professional_services",
+  "name": "Professional Services",
+  "description": "Engineering-grade professional-services site with a 6-stage service ladder, sectors served, case studies, and insights. Green, navy, and warm-orange palette.",
+  "preview_image": null,
+  "settings": {
+    "name": "Meridian Engineering",
+    "tagline": "Engineering consultancy for food, cold-chain, and post-harvest infrastructure.",
+    "description": "Meridian is an independent engineering consultancy that designs, specifies, and oversees the build of food processing, cold storage, and end-of-line facilities. We sell expertise, not equipment.",
+    "logo_text": "Meridian",
+    "logo_dot": false,
+    "base_url": "",
+    "seo_title": "Meridian Engineering — Food and cold-chain consultancy",
+    "seo_description": "Independent engineering consultancy for food, cold-chain, and post-harvest infrastructure. Six-stage service ladder from site assessment to implementation oversight.",
+    "theme_mode": "light",
+    "primary_color": "#1A5C35",
+    "accent_color": "#1D2D4E",
+    "heading_font": "Inter",
+    "body_font": "Inter",
+    "button_style": "square",
+    "density": "comfortable",
+    "radius": 6,
+    "contact_email": "hello@meridian-eng.example",
+    "contact_phone": "+31 20 555 0142",
+    "contact_address": "Keizersgracht 482, 1017 EG Amsterdam, Netherlands",
+    "contact_hours": "Monday to Friday, 9am to 6pm CET"
+  },
+  "navigation": [
+    {"label": "Services", "route": "services", "enabled": true, "order": 0},
+    {"label": "Sectors", "route": "portfolio", "enabled": true, "order": 1},
+    {"label": "Case studies", "route": "portfolio", "enabled": true, "order": 2},
+    {"label": "Insights", "route": "blog", "enabled": true, "order": 3},
+    {"label": "About", "route": "about", "enabled": true, "order": 4},
+    {"label": "Contact", "route": "contact", "enabled": true, "order": 5}
+  ],
+  "sections": [
+    {
+      "type": "hero",
+      "enabled": true,
+      "eyebrow": "Engineering consultancy · est. 2014",
+      "title": "We sell expertise, not equipment.",
+      "body": "Meridian designs and specifies food processing, cold storage, and end-of-line facilities to Dutch engineering standards. Independent of any equipment brand. Revenue at every stage of your project, not only when equipment is ordered.",
+      "order": 0,
+      "payload": {
+        "primary_cta": {"label": "Start with a Facility Assessment", "href": "#contact"},
+        "secondary_cta": {"label": "See the service ladder", "href": "#services"},
+        "stats": [
+          {"value": "6 stages", "label": "From site assessment to implementation oversight"},
+          {"value": "10 yrs", "label": "Continuous Bangladesh and Netherlands presence"},
+          {"value": "200+", "label": "Systems delivered by the partner network"}
+        ]
+      }
+    },
+    {
+      "type": "about",
+      "enabled": true,
+      "eyebrow": "What we do",
+      "title": "Six engineering stages, independently priced.",
+      "body": "Most consultancies bundle their work into a single fixed engagement. Meridian unbundles it. You can engage us for a two-day facility assessment, a six-week feasibility study, a full concept design, or an end-to-end programme from assessment through commissioning. Each stage stands alone and earns its keep.",
+      "order": 1,
+      "payload": {
+        "values": [
+          {"title": "Independent", "body": "Not tied to an equipment brand. Specifications are written around your product, not a catalogue."},
+          {"title": "Specification-led", "body": "We write the technical brief that suppliers must meet, then we evaluate the bids."},
+          {"title": "Dutch standards, local delivery", "body": "Engineering written to Dutch standards, delivered through our Amsterdam and Dhaka teams."}
+        ]
+      }
+    },
+    {
+      "type": "services",
+      "enabled": true,
+      "eyebrow": "The six-stage ladder",
+      "title": "Engagement starts where your project is.",
+      "body": "Most clients start with a Facility Assessment and move up the ladder as confidence in the project grows. Each stage is independently priced and produces a deliverable you can act on.",
+      "order": 2,
+      "payload": {
+        "show_limit": 6
+      }
+    },
+    {
+      "type": "projects",
+      "enabled": true,
+      "eyebrow": "Sectors and case studies",
+      "title": "Where the work has been.",
+      "body": "A sample of recent engagements across food processors, cold-chain operators, and donor-funded programmes.",
+      "order": 3,
+      "payload": {
+        "layout": "cards",
+        "show_limit": 6
+      }
+    },
+    {
+      "type": "testimonials",
+      "enabled": true,
+      "eyebrow": "Client feedback",
+      "title": "Plain words from clients we have worked with.",
+      "body": "",
+      "order": 4,
+      "payload": {
+        "layout": "stacked"
+      }
+    },
+    {
+      "type": "cta",
+      "enabled": true,
+      "eyebrow": "Ready to scope a project?",
+      "title": "Start with a Facility Assessment.",
+      "body": "Two to three days on site, a written report on the infrastructure gaps, and a clear recommendation for the next stage. Commercial terms shared after scoping.",
+      "order": 5,
+      "payload": {
+        "primary_cta": {"label": "Request a scoping call", "href": "#contact"},
+        "secondary_cta": {"label": "Download the capability brief", "href": "#"}
+      }
+    }
+  ],
+  "projects": [
+    {
+      "title": "Cold-store retrofit for a regional onion processor",
+      "client": "Regional onion processor",
+      "category": "Cold storage",
+      "summary": "Diagnosis and retrofit specification for a 4,500-tonne ventilated onion store losing 18 percent of stock to humidity and airflow issues.",
+      "body": "A three-week site assessment identified airflow and humidity control as the dominant loss drivers. Meridian wrote the retrofit specification, evaluated three supplier bids, and oversaw the eight-week installation. The next storage season cut losses to under 6 percent.",
+      "year": "2025",
+      "tags": ["cold storage", "onion", "retrofit"],
+      "featured": true,
+      "external_url": "",
+      "order": 0
+    },
+    {
+      "title": "Greenfield pack-house for a vegetable exporter",
+      "client": "Vegetable exporter",
+      "category": "Pack house",
+      "summary": "Concept design, equipment specification, and supplier selection for a 12-tonne-per-hour pack house feeding European retail customers.",
+      "body": "Six-month engagement from concept through equipment commissioning. Process flow was designed around three product families and two packaging formats. Meridian specified the optical sorter, the weight-grader, and the bagging line, then oversaw the integration on site.",
+      "year": "2024",
+      "tags": ["pack house", "vegetables", "greenfield"],
+      "featured": true,
+      "external_url": "",
+      "order": 1
+    },
+    {
+      "title": "End-of-line palletising for an FMCG factory",
+      "client": "Multinational FMCG manufacturer",
+      "category": "Palletising",
+      "summary": "Specification, sourcing, and installation oversight for an automated palletising cell on an existing high-throughput bagging line.",
+      "body": "The factory was hand-stacking 35,000 bags per shift. Meridian specified a robotic palletiser with layer-forming infeed, sourced through the partner network, and oversaw a four-week installation that took the line from manual to automated without losing a shift.",
+      "year": "2024",
+      "tags": ["palletising", "FMCG", "automation"],
+      "featured": false,
+      "external_url": "",
+      "order": 2
+    }
+  ],
+  "posts": [
+    {
+      "title": "Reducing post-harvest losses through better airflow design",
+      "slug": "reducing-post-harvest-losses-airflow",
+      "excerpt": "Most cold-store losses are airflow and humidity failures, not refrigeration failures. Here is the design lens we apply.",
+      "body": "Walk into a Bangladesh onion store losing 20 percent of stock to rot and the operator will tell you the refrigeration is the problem. Look at the data and it almost never is. Refrigeration capacity is rarely the bottleneck. Airflow patterns, return-air design, humidity setpoint logic, and insulation envelope failures are. This note sets out the design lens we apply when we walk a store for the first time.",
+      "author": "Dirk van der Berg",
+      "category": "Cold storage",
+      "tags": ["cold storage", "post-harvest", "airflow"],
+      "publish_date": null,
+      "status": "published",
+      "seo_title": "Reducing post-harvest losses through better airflow design",
+      "seo_description": "Why most cold-store losses are airflow failures, not refrigeration failures."
+    },
+    {
+      "title": "Why cold storage projects fail",
+      "slug": "why-cold-storage-projects-fail",
+      "excerpt": "Three structural reasons cold-store projects underperform their business case, drawn from ten years of site work.",
+      "body": "Most cold-store projects underperform their business case for one of three structural reasons. The brief was written by the supplier, the design was siloed across disciplines, or the commissioning protocol was waved through. This note unpacks each and the design discipline that avoids them.",
+      "author": "Marije Kuyper",
+      "category": "Insights",
+      "tags": ["cold storage", "design", "failure modes"],
+      "publish_date": null,
+      "status": "published",
+      "seo_title": "Why cold storage projects fail",
+      "seo_description": "Three structural reasons cold-store projects underperform, and the design discipline that avoids them."
+    },
+    {
+      "title": "Facility assessment checklist",
+      "slug": "facility-assessment-checklist",
+      "excerpt": "The structured checklist we walk through during a two-day Facility Assessment, published for anyone scoping their own.",
+      "body": "Every Meridian engagement starts with a Facility Assessment. This is the checklist our principal engineer walks through across two days on site. It is not a substitute for the assessment itself, but it is a useful structure for clients who want to scope their own internal review before bringing us in.",
+      "author": "Pieter Janssen",
+      "category": "Tools",
+      "tags": ["assessment", "checklist", "tools"],
+      "publish_date": null,
+      "status": "published",
+      "seo_title": "Facility assessment checklist",
+      "seo_description": "The structured checklist we walk through during a two-day Facility Assessment."
+    }
+  ],
+  "services": [
+    {
+      "icon": "search",
+      "title": "Stage 1 · Site Assessment",
+      "summary": "Two to three days on site and a written report on the infrastructure gaps. The entry point for almost every engagement.",
+      "details": "Independent walk of the facility, structured interviews with operations, and a written report on what is working and what is not. Includes a clear recommendation for the next stage of work.",
+      "price": "Scoped proposal",
+      "featured": true,
+      "order": 0
+    },
+    {
+      "icon": "clipboard",
+      "title": "Stage 2 · Feasibility Study",
+      "summary": "Four to eight weeks of structured work to test whether a project should proceed and what shape it should take.",
+      "details": "Market, technical, and financial feasibility tested as a single document. Suitable for capex investment committees and donor decision-makers.",
+      "price": "Scoped proposal",
+      "featured": false,
+      "order": 1
+    },
+    {
+      "icon": "layout",
+      "title": "Stage 3 · Concept Design",
+      "summary": "Layout, capacity, process flow, and zoning design produced as annotated drawings the contractor can build from.",
+      "details": "Concept design is where the engineering work begins. Output is a coordinated set of drawings, a process narrative, and a sized capacity model.",
+      "price": "Scoped proposal",
+      "featured": true,
+      "order": 2
+    },
+    {
+      "icon": "file-text",
+      "title": "Stage 4 · Technical Specification",
+      "summary": "Detailed, supplier-neutral specification for each equipment station and building system. Written so suppliers bid on the same brief.",
+      "details": "Technical specification is the deliverable most contractors quietly skip. It is the document that makes the difference between getting what you specified and getting what the supplier was already selling.",
+      "price": "Scoped proposal",
+      "featured": true,
+      "order": 3
+    },
+    {
+      "icon": "users",
+      "title": "Stage 5 · Supplier Selection",
+      "summary": "Independent evaluation of supplier bids against the specification, with a written recommendation.",
+      "details": "We do not take supplier commissions. Supplier selection is included when you have engaged us for Stage 4 specification work.",
+      "price": "Included with Stage 4",
+      "featured": false,
+      "order": 4
+    },
+    {
+      "icon": "check-circle",
+      "title": "Stage 6 · Implementation Oversight",
+      "summary": "On-site oversight through installation, integration, and commissioning. We hold the contractor to the specification.",
+      "details": "Implementation oversight is delivered as a project retainer for the duration of the build. Includes commissioning protocols, acceptance testing, and snag-list closeout.",
+      "price": "Project retainer",
+      "featured": false,
+      "order": 5
+    }
+  ],
+  "testimonials": [
+    {
+      "quote": "Meridian were the only consultancy that walked away from selling us equipment. That was the point at which we trusted the specification.",
+      "author": "Director of Operations",
+      "role": "Regional onion processor",
+      "order": 0
+    },
+    {
+      "quote": "We had been quoted three different equipment packages by three different suppliers. Meridian wrote the brief that all three had to bid against. The bids finally became comparable.",
+      "author": "Head of Engineering",
+      "role": "Vegetable exporter",
+      "order": 1
+    },
+    {
+      "quote": "The Facility Assessment paid for itself in the first month. They told us our cold-store problem was airflow, not refrigeration. Two other consultants had told us the opposite.",
+      "author": "Plant Manager",
+      "role": "Donor-funded cold-chain programme",
+      "order": 2
+    }
+  ],
+  "faqs": [
+    {
+      "question": "How do engagements typically begin?",
+      "answer": "Almost every engagement begins with a Stage 1 Facility Assessment. Two to three days on site, a written report, and a recommendation for the next stage. Commercial terms shared after scoping.",
+      "order": 0
+    },
+    {
+      "question": "Where do you work geographically?",
+      "answer": "Our two offices are in Amsterdam and Dhaka. The team works across Europe and South Asia. Travel is included in the engagement scope.",
+      "order": 1
+    },
+    {
+      "question": "Do you take supplier commissions?",
+      "answer": "No. We are an independent consultancy. Our revenue comes entirely from client fees, which is what allows us to write supplier-neutral specifications.",
+      "order": 2
+    },
+    {
+      "question": "Can we engage you for just one stage of the ladder?",
+      "answer": "Yes. Each stage is independently priced and produces a deliverable that stands alone. Most clients move up the ladder over multiple engagements, but a single-stage engagement is fine.",
+      "order": 3
+    },
+    {
+      "question": "Do you also supply equipment?",
+      "answer": "No. We design and specify. Equipment is sourced from suppliers through a competitive process that we manage on your behalf in Stage 5.",
+      "order": 4
+    }
+  ],
+  "team": [
+    {
+      "name": "Dirk van der Berg",
+      "role": "Managing Partner · Cold storage and post-harvest",
+      "order": 0
+    },
+    {
+      "name": "Marije Kuyper",
+      "role": "Partner · Processing and pack-house design",
+      "order": 1
+    },
+    {
+      "name": "Pieter Janssen",
+      "role": "Partner · Factory design and integration",
+      "order": 2
+    }
+  ],
+  "social_links": [
+    {
+      "platform": "linkedin",
+      "label": "LinkedIn",
+      "url": "https://linkedin.com/company/meridian-engineering",
+      "order": 0
+    },
+    {
+      "platform": "email",
+      "label": "Contact a partner",
+      "url": "mailto:hello@meridian-eng.example",
+      "order": 1
+    }
+  ]
+}

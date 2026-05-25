@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}{{ settings.seo_title or settings.name or "Marketing Site" }}{% endblock %}</title>
+<meta name="description" content="{{ settings.seo_description or settings.description }}">
+<style>
+  :root {
+    --primary: {{ settings.primary_color }};
+    --accent: {{ settings.accent_color }};
+    --heading: "{{ settings.heading_font }}", Georgia, serif;
+    --body: "{{ settings.body_font }}", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --radius: {{ settings.radius }}px;
+    {% if settings.theme_mode == 'dark' %}
+    --bg: #0f172a; --fg: #f8fafc; --muted: #94a3b8; --card: #1e293b; --border: #334155;
+    {% else %}
+    --bg: #ffffff; --fg: #0f172a; --muted: #475569; --card: #f8fafc; --border: #e2e8f0;
+    {% endif %}
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.6; }
+  h1, h2, h3, h4 { font-family: var(--heading); color: var(--fg); line-height: 1.2; margin: 0 0 0.5em; }
+  h1 { font-size: 2.5rem; }
+  h2 { font-size: 1.875rem; }
+  h3 { font-size: 1.375rem; }
+  a { color: var(--primary); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .container { max-width: 1100px; margin: 0 auto; padding: {% if settings.density == 'compact' %}1rem{% else %}2rem{% endif %}; }
+  header.site-header { border-bottom: 1px solid var(--border); padding: 1rem 0; background: var(--bg); }
+  header.site-header .inner { display: flex; align-items: center; justify-content: space-between; max-width: 1100px; margin: 0 auto; padding: 0 2rem; }
+  .brand { font-family: var(--heading); font-weight: 700; font-size: 1.25rem; color: var(--fg); display: inline-flex; align-items: center; gap: 0.5rem; }
+  .brand .dot { width: 8px; height: 8px; background: var(--primary); border-radius: 50%; display: inline-block; }
+  nav.primary ul { list-style: none; display: flex; gap: 1.5rem; margin: 0; padding: 0; }
+  nav.primary a { color: var(--fg); font-weight: 500; }
+  nav.primary a.active { color: var(--primary); }
+  .btn {
+    display: inline-block; padding: 0.65rem 1.25rem; background: var(--primary); color: white;
+    border-radius: {% if settings.button_style == 'rounded' %}999px{% else %}var(--radius){% endif %};
+    font-weight: 600; text-decoration: none;
+  }
+  .btn.secondary { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
+  .btn:hover { text-decoration: none; opacity: 0.9; }
+  .eyebrow { text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.75rem; color: var(--muted); margin-bottom: 0.75rem; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; }
+  .grid { display: grid; gap: 1.5rem; }
+  .grid-3 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  .grid-2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; margin: 2rem 0; }
+  .stat .value { font-family: var(--heading); font-size: 2rem; color: var(--primary); }
+  .stat .label { font-size: 0.85rem; color: var(--muted); }
+  .section { padding: {% if settings.density == 'compact' %}2rem 0{% else %}4rem 0{% endif %}; }
+  footer.site-footer { border-top: 1px solid var(--border); padding: 3rem 0; color: var(--muted); font-size: 0.9rem; background: var(--card); }
+  footer .inner { max-width: 1100px; margin: 0 auto; padding: 0 2rem; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1.5rem; }
+  footer .social a { color: var(--muted); margin-right: 1rem; }
+  .post img, .project img, .hero img, .team img { max-width: 100%; height: auto; border-radius: var(--radius); }
+  .meta { color: var(--muted); font-size: 0.85rem; }
+  .testimonial { font-size: 1.1rem; font-style: italic; }
+  .testimonial-author { font-style: normal; color: var(--muted); margin-top: 0.5rem; }
+  .faq-item { padding: 1rem 0; border-bottom: 1px solid var(--border); }
+  .faq-item:last-child { border-bottom: none; }
+  .tag { display: inline-block; background: var(--card); border: 1px solid var(--border); padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.75rem; color: var(--muted); margin-right: 0.25rem; }
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="brand" href="/site/">
+      <span>{{ settings.logo_text or settings.name }}</span>
+      {% if settings.logo_dot %}<span class="dot"></span>{% endif %}
+    </a>
+    <nav class="primary">
+      <ul>
+        {% for item in navigation if item.enabled %}
+          {% set href = '/site/' if item.route == 'home' else '/site/' ~ item.route %}
+          <li><a href="{{ href }}"{% if active == item.route %} class="active"{% endif %}>{{ item.label }}</a></li>
+        {% endfor %}
+      </ul>
+    </nav>
+  </div>
+</header>
+<main>{% block content %}{% endblock %}</main>
+<footer class="site-footer">
+  <div class="inner">
+    <div>
+      <strong>{{ settings.name }}</strong><br>
+      {{ settings.description }}
+    </div>
+    <div>
+      {% if settings.contact_email %}<div>{{ settings.contact_email }}</div>{% endif %}
+      {% if settings.contact_phone %}<div>{{ settings.contact_phone }}</div>{% endif %}
+      {% if settings.contact_address %}<div>{{ settings.contact_address }}</div>{% endif %}
+    </div>
+    <div class="social">
+      {% for link in social_links %}
+        <a href="{{ link.url }}">{{ link.label or link.platform }}</a>
+      {% endfor %}
+    </div>
+  </div>
+</footer>
+</body>
+</html>

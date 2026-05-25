@@ -98,5 +98,8 @@ def test_cleanup_ai_usage_drops_old(db):
 
 def test_run_all_returns_counts(db):
     out = run_all()
-    assert set(out.keys()) == {"refresh_tokens", "login_attempts", "ai_usage"}
+    # Phase-7 billing added the ``trials_expired`` job. Anchor on the
+    # minimal set so future jobs can join without breaking this test.
+    expected = {"refresh_tokens", "login_attempts", "ai_usage", "trials_expired"}
+    assert expected.issubset(out.keys())
     assert all(isinstance(v, int) for v in out.values())

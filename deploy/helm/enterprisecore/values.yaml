@@ -1,0 +1,286 @@
+# EnterpriseCore AI Suite — default values.
+#
+# Production-shaped defaults: 2 replicas of each service, HPA enabled,
+# Postgres bundled via StatefulSet, ingress with TLS. Override anything you
+# need with `helm install -f my-values.yaml ...` or `--set`.
+
+# -----------------------------------------------------------------------------
+# Container images
+# -----------------------------------------------------------------------------
+image:
+  backend:
+    repository: ghcr.io/enterprisecore/enterprisecore-backend
+    tag: "0.6.0"
+    pullPolicy: IfNotPresent
+  frontend:
+    repository: ghcr.io/enterprisecore/enterprisecore-frontend
+    tag: "0.6.0"
+    pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+# -----------------------------------------------------------------------------
+# Naming / labels
+# -----------------------------------------------------------------------------
+nameOverride: ""
+fullnameOverride: ""
+
+commonLabels: {}
+commonAnnotations: {}
+
+# -----------------------------------------------------------------------------
+# Replica counts (ignored when autoscaling.enabled = true)
+# -----------------------------------------------------------------------------
+replicaCount:
+  backend: 2
+  frontend: 2
+
+# -----------------------------------------------------------------------------
+# Backend pod settings
+# -----------------------------------------------------------------------------
+backend:
+  # Extra env vars merged into the rendered Deployment. Use this for things
+  # the chart doesn't model first-class (e.g. SENTRY_DSN, LICENSE_KEY).
+  extraEnv: []
+    # - name: SENTRY_DSN
+    #   value: "https://..."
+    # - name: LICENSE_KEY
+    #   valueFrom:
+    #     secretKeyRef:
+    #       name: my-license
+    #       key: key
+
+  # Probe tuning. Backends with large knowledge indexes need a longer warm-up.
+  livenessProbe:
+    httpGet:
+      path: /api/health
+      port: http
+    initialDelaySeconds: 30
+    periodSeconds: 30
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readinessProbe:
+    httpGet:
+      path: /api/health
+      port: http
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 3
+  startupProbe:
+    httpGet:
+      path: /api/health
+      port: http
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 24  # 2 min total
+
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 999
+    runAsGroup: 999
+    fsGroup: 999
+    seccompProfile:
+      type: RuntimeDefault
+
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false  # uvicorn writes to /tmp; flip after audit
+    capabilities:
+      drop: ["ALL"]
+
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+  # Persistent volume for /data (sqlite file, uploads, knowledge index).
+  # If you're on pure Postgres + S3-compatible storage, you can disable this.
+  persistence:
+    enabled: true
+    storageClass: ""
+    accessMode: ReadWriteOnce
+    size: 20Gi
+
+# -----------------------------------------------------------------------------
+# Frontend pod settings
+# -----------------------------------------------------------------------------
+frontend:
+  livenessProbe:
+    httpGet:
+      path: /healthz
+      port: http
+    initialDelaySeconds: 5
+    periodSeconds: 30
+  readinessProbe:
+    httpGet:
+      path: /healthz
+      port: http
+    initialDelaySeconds: 2
+    periodSeconds: 10
+
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 101
+    runAsGroup: 101
+    fsGroup: 101
+    seccompProfile:
+      type: RuntimeDefault
+
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop: ["ALL"]
+
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# -----------------------------------------------------------------------------
+# Services
+# -----------------------------------------------------------------------------
+service:
+  backend:
+    type: ClusterIP
+    port: 8765
+    annotations: {}
+  frontend:
+    type: ClusterIP
+    port: 80
+    annotations: {}
+
+# -----------------------------------------------------------------------------
+# Ingress
+# -----------------------------------------------------------------------------
+ingress:
+  enabled: true
+  className: nginx
+  host: enterprisecore.example.com
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+  tls:
+    enabled: true
+    secretName: enterprisecore-tls
+
+# -----------------------------------------------------------------------------
+# Resource requests / limits
+# -----------------------------------------------------------------------------
+resources:
+  backend:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+  frontend:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+# -----------------------------------------------------------------------------
+# Horizontal Pod Autoscaler
+# -----------------------------------------------------------------------------
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# -----------------------------------------------------------------------------
+# Pod Disruption Budget
+# -----------------------------------------------------------------------------
+pdb:
+  enabled: true
+  minAvailable: 1
+
+# -----------------------------------------------------------------------------
+# Network policy — restrict pod-to-pod traffic to the bare minimum.
+# -----------------------------------------------------------------------------
+networkPolicy:
+  enabled: false  # opt-in; many clusters don't run a NetworkPolicy controller
+
+# -----------------------------------------------------------------------------
+# Bundled Postgres (StatefulSet). Disable to use an external database; set
+# externalDatabase.dsn instead.
+# -----------------------------------------------------------------------------
+postgres:
+  enabled: true
+  image:
+    repository: postgres
+    tag: "16-alpine"
+    pullPolicy: IfNotPresent
+  database: enterprisecore
+  username: ec
+  # Leave blank to auto-generate on first install; stored in the chart's
+  # generated Secret.
+  password: ""
+  storageClass: ""
+  storage: 20Gi
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+
+externalDatabase:
+  # Only used when postgres.enabled = false.
+  dsn: ""  # postgresql+psycopg2://user:pass@host:5432/dbname
+  # Or set via a pre-existing secret:
+  existingSecret: ""
+  existingSecretKey: dsn
+
+# -----------------------------------------------------------------------------
+# Application secrets
+# Leave blank to auto-generate (rendered into a Secret on first install).
+# Override in production.
+# -----------------------------------------------------------------------------
+secrets:
+  secretKey: ""           # 64+ bytes of urlsafe random
+  encryptionKey: ""       # used for column-level encryption
+  anthropicApiKey: ""
+  openaiApiKey: ""
+  sentryDsn: ""
+  # If you already manage these out-of-band, point at an existing Secret:
+  existingSecret: ""
+
+# -----------------------------------------------------------------------------
+# Observability
+# -----------------------------------------------------------------------------
+prometheus:
+  enabled: false       # set true if kube-prometheus-stack is installed
+  serviceMonitor:
+    interval: 30s
+    scrapeTimeout: 10s
+    labels: {}         # e.g. release: kube-prometheus-stack
+
+# -----------------------------------------------------------------------------
+# Local LLM (Ollama). Off by default — usually you want a dedicated GPU node
+# pool and to wire that in via your own values.
+# -----------------------------------------------------------------------------
+ollama:
+  enabled: false
+  image:
+    repository: ollama/ollama
+    tag: latest
+  storage: 50Gi
+  storageClass: ""
+  resources:
+    requests:
+      cpu: 500m
+      memory: 4Gi
+    limits:
+      cpu: "4"
+      memory: 16Gi
+  # Set true if you have NVIDIA device plugin installed.
+  gpu: false

@@ -1,0 +1,329 @@
+{
+  "id": "restaurant",
+  "name": "Restaurant",
+  "description": "Mobile-first restaurant starter — menu, hours, reservations, gallery. Warm terracotta and cream palette inspired by neighborhood kitchens.",
+  "preview_image": null,
+  "settings": {
+    "name": "Corner Table",
+    "tagline": "Seasonal plates, quiet conversations.",
+    "description": "A neighborhood restaurant serving seasonal, locally-sourced plates in a warm, unhurried setting. Reservations open daily.",
+    "logo_text": "Corner Table",
+    "logo_dot": true,
+    "base_url": "",
+    "seo_title": "Corner Table — Local Kitchen & Bar",
+    "seo_description": "Seasonal cooking, neighborhood hospitality. Book a table tonight.",
+    "theme_mode": "light",
+    "primary_color": "#B7472A",
+    "accent_color": "#1F1B16",
+    "heading_font": "Fraunces",
+    "body_font": "Inter",
+    "button_style": "rounded",
+    "density": "comfortable",
+    "radius": 8,
+    "contact_email": "hello@cornertable.example",
+    "contact_phone": "(555) 014-2030",
+    "contact_address": "412 Linden Street, Riverview, OR 97214",
+    "contact_hours": "Tue-Thu 5-10pm · Fri-Sat 5-11pm · Sun Brunch 11am-3pm, Dinner 5-9pm · Mon Closed"
+  },
+  "navigation": [
+    {"label": "Menu", "route": "services", "enabled": true, "order": 0},
+    {"label": "About", "route": "about", "enabled": true, "order": 1},
+    {"label": "Gallery", "route": "portfolio", "enabled": true, "order": 2},
+    {"label": "Journal", "route": "blog", "enabled": false, "order": 3},
+    {"label": "Visit", "route": "contact", "enabled": true, "order": 4}
+  ],
+  "sections": [
+    {
+      "type": "hero",
+      "enabled": true,
+      "eyebrow": "Neighborhood kitchen · est. 2019",
+      "title": "Seasonal plates, quiet conversations.",
+      "body": "A small dining room on Linden Street where the bread is warm, the wine list is short, and dinner takes as long as it needs to.",
+      "order": 0,
+      "payload": {
+        "primary_cta": {"label": "View Menu", "href": "#services"},
+        "secondary_cta": {"label": "Book a Table", "href": "#contact"},
+        "stats": [
+          {"value": "7 yrs", "label": "On Linden Street"},
+          {"value": "Weekly", "label": "Menu changes"},
+          {"value": "Sourced", "label": "From local farms"}
+        ]
+      }
+    },
+    {
+      "type": "about",
+      "enabled": true,
+      "eyebrow": "About",
+      "title": "Where neighbors become regulars.",
+      "body": "Corner Table opened as a small idea between three friends who wanted to cook the kind of food they'd actually want to eat after a long day. Seven years later we're still here, cooking from a hand-written menu that changes when the produce does, and still pouring the same honest wines we started with.",
+      "order": 1,
+      "payload": {
+        "image_alt": "Warm dining room with pendant lights and dark wooden tables",
+        "values": [
+          {"title": "Seasonal", "body": "We cook with what is in season at the farmers' market down the road."},
+          {"title": "Unhurried", "body": "Dinner takes as long as it needs to. We do not flip tables."},
+          {"title": "Honest", "body": "Short wine list, real bread, fair prices, no pretense."}
+        ]
+      }
+    },
+    {
+      "type": "services",
+      "enabled": true,
+      "eyebrow": "Menu",
+      "title": "A short menu, made well.",
+      "body": "Updated weekly. Ask your server about tonight's specials and seasonal additions.",
+      "order": 2,
+      "payload": {
+        "show_limit": 6,
+        "footnote": "Prices in USD. Please tell us about allergies, we are happy to adapt most dishes."
+      }
+    },
+    {
+      "type": "projects",
+      "enabled": true,
+      "eyebrow": "Gallery",
+      "title": "A look inside.",
+      "body": "Plates, the bar, and the dining room at dusk.",
+      "order": 3,
+      "payload": {
+        "layout": "grid",
+        "show_limit": 6
+      }
+    },
+    {
+      "type": "testimonials",
+      "enabled": true,
+      "eyebrow": "Regulars say",
+      "title": "Reviews from the neighborhood.",
+      "body": "",
+      "order": 4,
+      "payload": {
+        "layout": "cards"
+      }
+    },
+    {
+      "type": "cta",
+      "enabled": true,
+      "eyebrow": "Visit",
+      "title": "Hours and location.",
+      "body": "412 Linden Street, Riverview, OR. Closed Mondays. Reservations recommended Friday and Saturday.",
+      "order": 5,
+      "payload": {
+        "primary_cta": {"label": "Book a Table", "href": "#contact"},
+        "secondary_cta": {"label": "Get Directions", "href": "https://maps.google.com"}
+      }
+    }
+  ],
+  "projects": [
+    {
+      "title": "Heirloom Tomato and Burrata",
+      "client": "Starters",
+      "category": "Plate",
+      "summary": "Local tomatoes, creamy burrata, basil oil, finishing salt.",
+      "body": "A summer staple that we run as long as the tomatoes hold up. The burrata comes from a small dairy two valleys over. Best with a glass of dry rosé.",
+      "year": "Summer",
+      "tags": ["vegetarian", "summer", "starter"],
+      "featured": true,
+      "external_url": "",
+      "order": 0
+    },
+    {
+      "title": "Braised Short Rib",
+      "client": "Mains",
+      "category": "Plate",
+      "summary": "Slow-braised in red wine, creamy polenta, gremolata.",
+      "body": "Twelve hours in the oven with mirepoix and a bottle of the house red. The polenta is stone-ground from a mill in the next county.",
+      "year": "Autumn",
+      "tags": ["main", "autumn", "comfort"],
+      "featured": true,
+      "external_url": "",
+      "order": 1
+    },
+    {
+      "title": "Wild Mushroom Risotto",
+      "client": "Mains",
+      "category": "Plate",
+      "summary": "Arborio, foraged mushrooms, aged parmesan, thyme.",
+      "body": "Mushrooms come from a forager who walks the coastal range. The risotto is finished tableside.",
+      "year": "Year-round",
+      "tags": ["vegetarian", "main", "signature"],
+      "featured": false,
+      "external_url": "",
+      "order": 2
+    },
+    {
+      "title": "Dark Chocolate Tart",
+      "client": "Desserts",
+      "category": "Plate",
+      "summary": "70% chocolate ganache, sea salt, fresh raspberries.",
+      "body": "A short pastry shell, a generous ganache, and a flake of sea salt. The most-ordered dessert on the menu, for good reason.",
+      "year": "Year-round",
+      "tags": ["dessert", "signature", "chocolate"],
+      "featured": true,
+      "external_url": "",
+      "order": 3
+    }
+  ],
+  "posts": [
+    {
+      "title": "What is on the menu this week",
+      "slug": "what-is-on-the-menu-this-week",
+      "excerpt": "A short note on the dishes we are running this week and why we chose them.",
+      "body": "The tomatoes are still good and we are running the burrata one more week before the season turns. We have added a roasted-squash starter that we are pretty proud of, and the short rib is back on Friday and Saturday. Reservations are tight this week, please call ahead.",
+      "author": "Chef Marin",
+      "category": "Menu",
+      "tags": ["weekly", "menu"],
+      "publish_date": null,
+      "status": "published",
+      "seo_title": "This week at Corner Table",
+      "seo_description": "What we are cooking this week and why."
+    },
+    {
+      "title": "Where our produce comes from",
+      "slug": "where-our-produce-comes-from",
+      "excerpt": "A short tour of the four farms that supply most of what ends up on your plate.",
+      "body": "Four small farms within an hour of the restaurant grow most of what we cook with. We visit twice a month, place standing orders on Mondays, and adjust the menu based on what is ready that week.",
+      "author": "Chef Marin",
+      "category": "Sourcing",
+      "tags": ["farms", "sourcing"],
+      "publish_date": null,
+      "status": "published",
+      "seo_title": "Where our produce comes from",
+      "seo_description": "A short tour of the four local farms that supply Corner Table."
+    }
+  ],
+  "services": [
+    {
+      "icon": "sunrise",
+      "title": "Sunday Brunch",
+      "summary": "Eggs benedict, malted waffles, a short brunch menu and bottomless coffee. Served 11am to 3pm Sundays only.",
+      "details": "Brunch is the only time we take walk-ins without a wait. Sit at the bar with a paper if you have not booked.",
+      "price": "from $14",
+      "featured": false,
+      "order": 0
+    },
+    {
+      "title": "Dinner Service",
+      "icon": "moon",
+      "summary": "Three-course seasonal menu, short wine list, classic cocktails. Tuesday through Sunday evenings.",
+      "details": "Dinner is what we built the place around. Most tables stay for two hours. We do not rush them.",
+      "price": "from $32 per person",
+      "featured": true,
+      "order": 1
+    },
+    {
+      "icon": "wine",
+      "title": "Bar and Aperitivo",
+      "summary": "Eight stools at the bar, a short list of bottled wines by the glass, and an aperitivo menu from 4pm.",
+      "details": "Walk-ins welcome at the bar. Order a snack and stay for dinner if a table opens up.",
+      "price": "from $8",
+      "featured": false,
+      "order": 2
+    },
+    {
+      "icon": "calendar",
+      "title": "Private Events",
+      "summary": "The whole dining room seats 32. We host birthdays, rehearsal dinners, small wedding parties, and the occasional book launch.",
+      "details": "We will work with you on a custom menu and a wine pairing. Three-week lead time recommended.",
+      "price": "from $85 per person",
+      "featured": false,
+      "order": 3
+    }
+  ],
+  "testimonials": [
+    {
+      "quote": "Our favorite restaurant in the neighborhood. The kind of place you take out-of-town family because you want them to remember the food.",
+      "author": "Lena T.",
+      "role": "Regular since 2020",
+      "order": 0
+    },
+    {
+      "quote": "Quiet, warm, and the kitchen never sends out a flat plate. The short rib is worth the trip alone.",
+      "author": "James R.",
+      "role": "Yelp review, 5 stars",
+      "order": 1
+    },
+    {
+      "quote": "We booked the whole room for our anniversary. They built a menu around our favorites and the wine pairings were perfect.",
+      "author": "Maria and David",
+      "role": "Private event guests",
+      "order": 2
+    },
+    {
+      "quote": "Brunch at Corner Table is a Sunday ritual. The waffles, the eggs, and a paper at the bar. That is the whole morning.",
+      "author": "Annie K.",
+      "role": "Sunday brunch regular",
+      "order": 3
+    }
+  ],
+  "faqs": [
+    {
+      "question": "Do you take reservations?",
+      "answer": "Yes, and we recommend them Thursday through Saturday. The bar is walk-in only. Reservations can be made by phone or through OpenTable.",
+      "order": 0
+    },
+    {
+      "question": "What time is brunch served?",
+      "answer": "Brunch runs from 11am to 3pm on Sundays only. Dinner service then begins at 5pm.",
+      "order": 1
+    },
+    {
+      "question": "Can you accommodate dietary restrictions?",
+      "answer": "Yes. Tell us when you book or when you sit down and we will adapt most dishes. We always have at least one vegetarian and one gluten-free option on each course.",
+      "order": 2
+    },
+    {
+      "question": "Is there parking nearby?",
+      "answer": "Street parking on Linden Street and a public lot one block north on Cherry. The lot is free after 6pm.",
+      "order": 3
+    },
+    {
+      "question": "Do you host private events?",
+      "answer": "Yes. The whole dining room seats 32 and a partial buyout starts at 16. Three-week lead time recommended for custom menus.",
+      "order": 4
+    }
+  ],
+  "team": [
+    {
+      "name": "Marin Acosta",
+      "role": "Chef and Co-owner",
+      "order": 0
+    },
+    {
+      "name": "Theo Han",
+      "role": "Beverage Director and Co-owner",
+      "order": 1
+    },
+    {
+      "name": "Priya Chen",
+      "role": "General Manager and Co-owner",
+      "order": 2
+    }
+  ],
+  "social_links": [
+    {
+      "platform": "instagram",
+      "label": "Instagram",
+      "url": "https://instagram.com/cornertable",
+      "order": 0
+    },
+    {
+      "platform": "opentable",
+      "label": "OpenTable",
+      "url": "https://opentable.com/cornertable",
+      "order": 1
+    },
+    {
+      "platform": "yelp",
+      "label": "Yelp",
+      "url": "https://yelp.com/biz/cornertable",
+      "order": 2
+    },
+    {
+      "platform": "facebook",
+      "label": "Facebook",
+      "url": "https://facebook.com/cornertable",
+      "order": 3
+    }
+  ]
+}

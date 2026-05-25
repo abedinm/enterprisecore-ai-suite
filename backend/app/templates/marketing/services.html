@@ -1,0 +1,22 @@
+{% extends "marketing/base.html" %}
+{% block title %}Services — {{ settings.name }}{% endblock %}
+{% block content %}
+<div class="container">
+  <section class="section">
+    <h1>Services</h1>
+    {% if not services %}
+      <p class="meta">No services have been added yet.</p>
+    {% endif %}
+    <div class="grid grid-2">
+      {% for service in services %}
+        <div class="card">
+          <h2>{{ service.title }}</h2>
+          {% if service.summary %}<p>{{ service.summary }}</p>{% endif %}
+          {% if service.details %}<p>{{ service.details }}</p>{% endif %}
+          {% if service.price %}<p class="meta"><strong>{{ service.price }}</strong></p>{% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}

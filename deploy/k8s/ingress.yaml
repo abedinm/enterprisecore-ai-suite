@@ -1,0 +1,56 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: enterprisecore
+  labels:
+    app.kubernetes.io/name: enterprisecore
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - enterprisecore.example.com
+      secretName: enterprisecore-tls
+  rules:
+    - host: enterprisecore.example.com
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: enterprisecore-backend
+                port:
+                  number: 8765
+          - path: /site
+            pathType: Prefix
+            backend:
+              service:
+                name: enterprisecore-backend
+                port:
+                  number: 8765
+          - path: /widget.js
+            pathType: Exact
+            backend:
+              service:
+                name: enterprisecore-backend
+                port:
+                  number: 8765
+          - path: /metrics
+            pathType: Exact
+            backend:
+              service:
+                name: enterprisecore-backend
+                port:
+                  number: 8765
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: enterprisecore-frontend
+                port:
+                  number: 80

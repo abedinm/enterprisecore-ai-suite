@@ -109,7 +109,7 @@ function RolesPanel() {
           <UsersRound size={18} />
           <h2 className="text-lg font-semibold">User roles</h2>
         </div>
-        <span className="ec-badge-blue">Admin, Manager, Employee, Developer</span>
+        <span className="ec-badge-blue">Admin, Manager, Employee, Developer + Student, Teacher, Registrar, Dean (Academic)</span>
       </div>
       <table className="ec-table">
         <thead>
@@ -141,6 +141,10 @@ function RolesPanel() {
                     <option value="Manager">Manager</option>
                     <option value="Employee">Employee</option>
                     <option value="Developer">Developer</option>
+                    <option value="Student">Student</option>
+                    <option value="Teacher">Teacher</option>
+                    <option value="Registrar">Registrar</option>
+                    <option value="Dean">Dean</option>
                   </select>
                 </td>
                 <td>

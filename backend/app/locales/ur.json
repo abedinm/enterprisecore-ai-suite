@@ -1,0 +1,16 @@
+{
+  "errors.invalid_credentials": "ای میل یا پاس ورڈ غلط ہے",
+  "errors.not_authenticated": "تصدیق نہیں ہوئی",
+  "errors.user_inactive": "صارف اکاؤنٹ غیر فعال ہے یا موجود نہیں ہے",
+  "errors.permission_denied": "آپ کو یہ کارروائی انجام دینے کی اجازت نہیں ہے",
+  "errors.not_found": "{entity} نہیں ملا",
+  "errors.conflict_email": "اس ای میل کے ساتھ صارف پہلے سے موجود ہے",
+  "errors.mfa_required": "MFA کوڈ درکار ہے",
+  "errors.mfa_invalid": "MFA کوڈ غلط ہے",
+  "errors.feature_unavailable": "موجودہ پلان میں فیچر '{feature}' شامل نہیں ہے۔",
+  "errors.required_field": "{field} لازمی ہے",
+  "errors.invalid_locale": "غیر معاون زبان '{locale}'",
+  "ok.saved": "محفوظ ہو گیا",
+  "ok.deleted": "حذف ہو گیا",
+  "errors.csrf_failed": "آپ کا سیشن تازہ کرنے کی ضرورت ہے — صفحہ دوبارہ لوڈ کریں۔"
+}

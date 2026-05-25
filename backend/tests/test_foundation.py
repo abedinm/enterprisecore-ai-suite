@@ -187,8 +187,9 @@ def test_mark_read_own_notification_succeeds(client, db, auth_headers, session_f
     assert r.json()["is_read"] is True
 
 
-def test_broadcast_notification_can_be_marked_read(client, auth_headers, session_factory):
-    with session_factory() as s:
+def test_broadcast_notification_can_be_marked_read(client, auth_headers, session_factory, default_tenant):
+    from app.core.tenant_context import tenant_scope
+    with session_factory() as s, tenant_scope(default_tenant.id):
         n = Notification(user_id=None, title="Broadcast", body="for everyone", level="info")
         s.add(n)
         s.commit()

@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.exceptions import AppError
+from app.core.metrics import record_ai_call
 from app.models.ai import AiUsageRecord
 
 # Per-token USD prices (rough public defaults)
@@ -61,6 +62,23 @@ def _cost(model: str, tin: int, tout: int) -> Decimal:
 def _record_usage(db: Session | None, *, user_id: str | None, provider: str, model: str,
                   feature: str, tin: int, tout: int, cost: Decimal, latency_ms: int,
                   success: bool = True) -> None:
+    # Emit Prometheus metrics for EVERY call, even when there's no DB session
+    # (test paths, BYO-key callers without an AiUsageRecord). Metrics are
+    # cheap and they're the canonical operational signal.
+    try:
+        record_ai_call(
+            provider=provider,
+            model=model,
+            feature=feature,
+            success=success,
+            tokens_in=tin or 0,
+            tokens_out=tout or 0,
+            cost_usd=float(cost) if cost is not None else 0.0,
+            latency_seconds=(latency_ms or 0) / 1000.0,
+        )
+    except Exception as e:  # pragma: no cover - metrics must not break the app
+        logger.warning("Failed to emit AI metrics: {}", e)
+
     if db is None:
         return
     try:
@@ -72,6 +90,20 @@ def _record_usage(db: Session | None, *, user_id: str | None, provider: str, mod
         db.commit()
     except Exception as e:  # pragma: no cover
         logger.warning("Failed to record AI usage: {}", e)
+
+    # Tenant-level metered-usage roll-up. Ollama (provider=="ollama") records
+    # cost 0 so it's already exempt via the cost > 0 check inside
+    # ``increment_ai_paid_usage``. Wrapped in its own try so a metering
+    # failure can never break an AI call.
+    try:
+        from app.core.tenant_context import get_current_tenant_id
+        from app.services.stripe_service import increment_ai_paid_usage
+
+        tid = get_current_tenant_id()
+        if tid and cost and success:
+            increment_ai_paid_usage(db, tid, cost)
+    except Exception as e:  # pragma: no cover
+        logger.warning("Failed to increment tenant AI meter: {}", e)
 
 
 def available_providers() -> dict[str, bool]:
@@ -351,3 +383,202 @@ def explain_regex(pattern: str, *, db: Session | None = None, user_id: str | Non
         system="You teach regex precisely and concisely.",
         api_key_override=api_key_override, provider=provider,
     )
+
+
+# ---------------------------------------------------------------------------
+# Streaming variants
+# ---------------------------------------------------------------------------
+def _stream_anthropic(messages: list[AiMessage], *, model: str | None,
+                      max_tokens: int, temperature: float,
+                      api_key_override: str | None = None):
+    key = api_key_override or settings.anthropic_api_key
+    if not key:
+        raise AppError("Anthropic API key not configured",
+                       code="ai_provider_not_configured")
+    import anthropic
+
+    client = anthropic.Anthropic(api_key=key)
+    system, conv = _format_messages_for_claude(messages)
+    m = model or DEFAULT_MODELS["anthropic"]
+    started = time.time()
+    tokens_in = 0
+    tokens_out = 0
+    full_text_parts: list[str] = []
+    with client.messages.stream(
+        model=m, max_tokens=max_tokens, temperature=temperature,
+        system=system or "You are a helpful assistant.", messages=conv,
+    ) as stream:
+        for delta in stream.text_stream:
+            if delta:
+                full_text_parts.append(delta)
+                yield "token", {"text": delta}
+        msg = stream.get_final_message()
+        tokens_in = msg.usage.input_tokens
+        tokens_out = msg.usage.output_tokens
+    latency_ms = int((time.time() - started) * 1000)
+    yield "usage", {
+        "provider": "anthropic", "model": m,
+        "tokens_in": tokens_in, "tokens_out": tokens_out,
+        "cost_usd": str(_cost(m, tokens_in, tokens_out)),
+        "latency_ms": latency_ms,
+        "text": "".join(full_text_parts),
+    }
+
+
+def _stream_openai(messages: list[AiMessage], *, model: str | None,
+                   max_tokens: int, temperature: float,
+                   api_key_override: str | None = None):
+    key = api_key_override or settings.openai_api_key
+    if not key:
+        raise AppError("OpenAI API key not configured", code="ai_provider_not_configured")
+    from openai import OpenAI
+
+    client = OpenAI(api_key=key)
+    m = model or DEFAULT_MODELS["openai"]
+    conv = [{"role": x.role, "content": x.content} for x in messages]
+    started = time.time()
+    full_text_parts: list[str] = []
+    tokens_in = 0
+    tokens_out = 0
+    response = client.chat.completions.create(
+        model=m, messages=conv, max_tokens=max_tokens, temperature=temperature,
+        stream=True, stream_options={"include_usage": True},
+    )
+    for chunk in response:
+        if chunk.choices:
+            delta = chunk.choices[0].delta
+            if delta and delta.content:
+                full_text_parts.append(delta.content)
+                yield "token", {"text": delta.content}
+        if chunk.usage:
+            tokens_in = chunk.usage.prompt_tokens
+            tokens_out = chunk.usage.completion_tokens
+    latency_ms = int((time.time() - started) * 1000)
+    yield "usage", {
+        "provider": "openai", "model": m,
+        "tokens_in": tokens_in, "tokens_out": tokens_out,
+        "cost_usd": str(_cost(m, tokens_in, tokens_out)),
+        "latency_ms": latency_ms,
+        "text": "".join(full_text_parts),
+    }
+
+
+def _stream_ollama(messages: list[AiMessage], *, model: str | None,
+                   max_tokens: int, temperature: float):
+    import httpx
+
+    m = model or DEFAULT_MODELS["ollama"]
+    conv = [{"role": x.role, "content": x.content} for x in messages]
+    started = time.time()
+    tokens_in = 0
+    tokens_out = 0
+    full_text_parts: list[str] = []
+    try:
+        with httpx.Client(timeout=None) as client:
+            with client.stream(
+                "POST", f"{settings.ollama_host}/api/chat",
+                json={
+                    "model": m, "messages": conv, "stream": True,
+                    "options": {"num_predict": max_tokens, "temperature": temperature},
+                },
+            ) as r:
+                if r.status_code >= 400:
+                    raise AppError(
+                        f"Ollama HTTP {r.status_code}",
+                        code="ai_provider_unavailable", status_code=503,
+                    )
+                for line in r.iter_lines():
+                    if not line:
+                        continue
+                    try:
+                        ev = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    delta = (ev.get("message") or {}).get("content", "")
+                    if delta:
+                        full_text_parts.append(delta)
+                        yield "token", {"text": delta}
+                    if ev.get("done"):
+                        tokens_in = int(ev.get("prompt_eval_count") or 0)
+                        tokens_out = int(ev.get("eval_count") or 0)
+                        break
+    except httpx.HTTPError as e:
+        raise AppError(f"Ollama call failed: {e}",
+                       code="ai_provider_unavailable", status_code=503) from e
+
+    latency_ms = int((time.time() - started) * 1000)
+    yield "usage", {
+        "provider": "ollama", "model": m,
+        "tokens_in": tokens_in, "tokens_out": tokens_out,
+        "cost_usd": "0",
+        "latency_ms": latency_ms,
+        "text": "".join(full_text_parts),
+    }
+
+
+def stream_call(
+    *, messages: list[AiMessage], provider: str | None = None,
+    model: str | None = None, max_tokens: int = 1024, temperature: float = 0.7,
+    feature: str = "general", db: Session | None = None,
+    user_id: str | None = None, api_key_override: str | None = None,
+):
+    """Streaming counterpart of ``call``. Yields tuples of
+    ``(event_type, payload)`` where event_type is one of ``token`` /
+    ``usage`` / ``error``. Records AiUsageRecord at the end (success or fail).
+    """
+    chosen = provider or settings.ai_default_provider
+    available = available_providers()
+    if not api_key_override and not available.get(chosen):
+        for fb in ("anthropic", "openai", "ollama"):
+            if available.get(fb):
+                chosen = fb
+                break
+    try:
+        _check_spending_limit(db, user_id, chosen)
+    except AppError as e:
+        yield "error", {"detail": e.message, "code": e.code}
+        return
+
+    if chosen == "anthropic":
+        gen = _stream_anthropic(messages, model=model, max_tokens=max_tokens,
+                                temperature=temperature, api_key_override=api_key_override)
+    elif chosen == "openai":
+        gen = _stream_openai(messages, model=model, max_tokens=max_tokens,
+                             temperature=temperature, api_key_override=api_key_override)
+    else:
+        gen = _stream_ollama(messages, model=model, max_tokens=max_tokens,
+                             temperature=temperature)
+
+    final_usage: dict | None = None
+    try:
+        for ev_type, payload in gen:
+            if ev_type == "usage":
+                final_usage = payload
+            yield ev_type, payload
+    except AppError as e:
+        yield "error", {"detail": e.message, "code": e.code}
+        _record_usage(db, user_id=user_id, provider=chosen, model=model or "?",
+                      feature=feature, tin=0, tout=0, cost=Decimal("0"),
+                      latency_ms=0, success=False)
+        return
+    except Exception as e:  # pragma: no cover
+        logger.exception("stream_call unexpected error: {}", e)
+        yield "error", {"detail": str(e), "code": "internal_error"}
+        return
+
+    if final_usage:
+        try:
+            cost = Decimal(str(final_usage.get("cost_usd", "0")))
+        except Exception:
+            cost = Decimal("0")
+        _record_usage(
+            db, user_id=user_id,
+            provider=final_usage.get("provider", chosen),
+            model=final_usage.get("model", model or "?"),
+            feature=feature,
+            tin=int(final_usage.get("tokens_in", 0)),
+            tout=int(final_usage.get("tokens_out", 0)),
+            cost=cost,
+            latency_ms=int(final_usage.get("latency_ms", 0)),
+            success=True,
+        )

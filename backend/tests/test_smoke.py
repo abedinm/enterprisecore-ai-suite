@@ -28,6 +28,9 @@ def test_wrong_password_rejected(client):
 
 
 def test_unauthenticated_endpoint_returns_401(client):
+    # Clear any cookies left over from prior tests' login (TestClient persists
+    # the access_token cookie across the session-scoped client fixture).
+    client.cookies.clear()
     r = client.get("/api/v1/auth/me")
     assert r.status_code == 401
 

@@ -6,8 +6,11 @@ SQLAlchemy>=2.0.36,<2.1
 alembic>=1.14,<2.0
 psycopg2-binary>=2.9
 aiosqlite>=0.20
-passlib[bcrypt]>=1.7.4
+passlib[bcrypt,argon2]>=1.7.4
 bcrypt>=4.0,<4.1
+# argon2-cffi: argon2id hashing — OWASP 2024 recommended algorithm.
+# Pure-pyca side; passlib drives it via the [argon2] extra above.
+argon2-cffi>=23.1,<25
 python-jose[cryptography]>=3.3,<4
 cryptography>=42,<45
 python-multipart>=0.0.20
@@ -27,6 +30,8 @@ markdown>=3.7
 beautifulsoup4>=4.12
 python-docx>=1.1
 openpyxl>=3.1
+pypdf>=5.0
+tiktoken>=0.8
 pandas>=2.2
 numpy>=2.0
 matplotlib>=3.9
@@ -34,5 +39,38 @@ APScheduler>=3.11
 loguru>=0.7
 orjson>=3.10
 slowapi>=0.1.9
+stripe>=11,<12
 pyotp>=2.9
 python-ulid>=3.0
+sentry-sdk[fastapi,sqlalchemy,loguru]>=2.18,<3.0
+# --- Observability ------------------------------------------------------
+# prometheus-client: canonical Python lib for Prometheus exposition format.
+prometheus-client>=0.21,<1.0
+# OpenTelemetry: opt-in tracing. Only activated when OTEL_EXPORTER_OTLP_ENDPOINT
+# is set, so the cost in dev/test/frozen-exe is just the import.
+opentelemetry-api>=1.27,<2.0
+opentelemetry-sdk>=1.27,<2.0
+opentelemetry-instrumentation-fastapi>=0.48b0,<1.0
+opentelemetry-instrumentation-sqlalchemy>=0.48b0,<1.0
+opentelemetry-instrumentation-httpx>=0.48b0,<1.0
+opentelemetry-exporter-otlp-proto-http>=1.27,<2.0
+# --- Background jobs (Phase 10) -----------------------------------------
+# RQ is the pure-Python redis-backed queue we wrap; both rq + redis are
+# OPTIONAL at runtime — if REDIS_URL is unset the queue falls back to
+# sync execution in-process and these imports are never reached.
+rq>=1.16,<2.0
+redis>=5.0,<6.0
+# --- Identity / SSO (Phase 7) -------------------------------------------
+# Authlib drives the OIDC flow (discovery, JWKS, token exchange,
+# ID-token verification).
+authlib>=1.6,<2.0
+# SAML 2.0 — OneLogin's canonical Python implementation. Hard-depends on
+# the ``xmlsec`` Python binding + the system ``xmlsec1`` library; a
+# stub-mode fallback in app/services/sso_saml.py covers environments
+# where xmlsec1 cannot be installed.
+python3-saml>=1.16,<2.0
+# WebAuthn / FIDO2 passkeys — pure-Python attestation + assertion
+# verification. The endpoint surface in app/api/v1/endpoints/webauthn.py
+# defers to this lib for all crypto so tests can mock its verify
+# functions without exercising real signatures.
+webauthn>=2.0,<3.0

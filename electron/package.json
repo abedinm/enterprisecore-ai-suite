@@ -7,37 +7,91 @@
   "scripts": {
     "dev": "cross-env ELECTRON_DEV=1 electron .",
     "start": "electron .",
-    "dist": "electron-builder --win --x64",
-    "dist:portable": "electron-builder --win portable --x64"
+    "dist": "electron-builder",
+    "dist:win": "electron-builder --win --x64",
+    "dist:win:portable": "electron-builder --win portable --x64",
+    "dist:mac": "electron-builder --mac --universal",
+    "dist:linux": "electron-builder --linux --x64",
+    "dist:all": "electron-builder -mwl"
   },
   "build": {
     "appId": "com.enterprisecore.suite",
     "productName": "EnterpriseCore AI Suite",
+    "copyright": "Copyright (c) 2026 EnterpriseCore",
     "asar": true,
-    "directories": { "output": "dist" },
+    "directories": {
+      "output": "dist",
+      "buildResources": "resources"
+    },
     "files": [
       "main.js",
       "preload.js",
-      "resources/**",
-      "../frontend/dist/**"
+      "package.json",
+      "node_modules/**/*"
     ],
     "extraResources": [
-      { "from": "resources/backend", "to": "backend" }
+      { "from": "resources/backend", "to": "backend" },
+      { "from": "../frontend/dist", "to": "frontend" }
     ],
     "win": {
-      "target": [{ "target": "nsis", "arch": ["x64"] }],
       "icon": "resources/icon.ico",
-      "publisherName": "EnterpriseCore"
+      "publisherName": "EnterpriseCore",
+      "artifactName": "${productName}-Setup-${version}-${arch}.${ext}",
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "zip", "arch": ["x64"] }
+      ]
     },
     "nsis": {
       "oneClick": false,
+      "perMachine": false,
       "allowElevation": true,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "EnterpriseCore AI Suite",
-      "license": "../docs/LICENSE.txt"
-    }
+      "license": "../docs/LICENSE.txt",
+      "deleteAppDataOnUninstall": false
+    },
+    "mac": {
+      "icon": "resources/icon.icns",
+      "category": "public.app-category.business",
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "entitlements.mac.plist",
+      "entitlementsInherit": "entitlements.mac.plist",
+      "notarize": false,
+      "target": [
+        { "target": "dmg", "arch": ["universal"] },
+        { "target": "zip", "arch": ["universal"] }
+      ]
+    },
+    "dmg": {
+      "sign": false,
+      "contents": [
+        { "x": 130, "y": 220 },
+        { "x": 410, "y": 220, "type": "link", "path": "/Applications" }
+      ]
+    },
+    "linux": {
+      "icon": "resources/icon.png",
+      "category": "Office",
+      "synopsis": "Offline business management + AI coding assistant",
+      "description": "EnterpriseCore AI Suite — replace every software subscription your company pays for with a single offline-capable suite. Includes finance, HR, CRM, projects, inventory, document and communication tools plus an AI coding assistant.",
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
+      "target": [
+        { "target": "AppImage", "arch": ["x64"] },
+        { "target": "deb", "arch": ["x64"] },
+        { "target": "rpm", "arch": ["x64"] }
+      ]
+    },
+    "publish": {
+      "provider": "generic",
+      "url": "https://updates.enterprisecore.local/${channel}",
+      "channel": "latest"
+    },
+    "generateUpdatesFilesForAllChannels": true
   },
   "devDependencies": {
     "cross-env": "^7.0.3",

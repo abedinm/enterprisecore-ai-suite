@@ -1,0 +1,16 @@
+{
+  "errors.invalid_credentials": "البريد الإلكتروني أو كلمة المرور غير صالحة",
+  "errors.not_authenticated": "غير مصادق",
+  "errors.user_inactive": "حساب المستخدم غير نشط أو غير موجود",
+  "errors.permission_denied": "ليس لديك صلاحية لتنفيذ هذا الإجراء",
+  "errors.not_found": "تعذر العثور على {entity}",
+  "errors.conflict_email": "يوجد مستخدم بهذا البريد الإلكتروني بالفعل",
+  "errors.mfa_required": "رمز MFA مطلوب",
+  "errors.mfa_invalid": "رمز MFA غير صالح",
+  "errors.feature_unavailable": "الميزة '{feature}' غير مفعّلة في الخطة الحالية.",
+  "errors.required_field": "{field} مطلوب",
+  "errors.invalid_locale": "لغة غير مدعومة '{locale}'",
+  "ok.saved": "تم الحفظ",
+  "ok.deleted": "تم الحذف",
+  "errors.csrf_failed": "يجب تحديث جلستك — أعد تحميل الصفحة وحاول مرة أخرى."
+}

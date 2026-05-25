@@ -4,7 +4,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, String, func
+from sqlalchemy import DateTime, ForeignKey, String, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, declared_attr, mapped_column
 
 
@@ -72,3 +72,20 @@ class TimestampMixin:
 
 class IdMixin:
     id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_ulid)
+
+
+class TenantMixin:
+    """Mixin that adds a ``tenant_id`` FK column.
+
+    Most business-data models compose this with ``IdMixin`` and ``TimestampMixin``.
+    The ``tenant_id`` is auto-populated by the ``before_insert`` event listener
+    in ``app/core/tenant_orm.py`` from the request's tenant context, so call
+    sites don't have to pass it explicitly.
+    """
+
+    tenant_id: Mapped[str] = mapped_column(
+        String(32),
+        ForeignKey("tenants.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+    )

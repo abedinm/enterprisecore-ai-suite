@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
-import { MessageSquare, Plus, Send, Trash2 } from 'lucide-react';
+import { MessageSquare, Plus, Send, Trash2, Zap } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { cn } from '../../lib/utils';
 import { api } from '../../lib/api';
+import { streamSse } from '../../lib/knowledge';
 
 type Provider = { anthropic: boolean; openai: boolean; ollama: boolean };
 type Conversation = {
@@ -34,6 +35,11 @@ export function ChatTab() {
   const [selected, setSelected] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
   const [provider, setProvider] = useState<'anthropic' | 'openai' | 'ollama'>('ollama');
+  const [streaming, setStreaming] = useState(false);
+  const [streamText, setStreamText] = useState('');
+  const [streamUserText, setStreamUserText] = useState('');
+  const [streamInflight, setStreamInflight] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const messages = useQuery({
@@ -43,7 +49,6 @@ export function ChatTab() {
   });
 
   useEffect(() => {
-    // Prefer the first available paid provider if configured
     if (!providers.data) return;
     if (providers.data.anthropic) setProvider('anthropic');
     else if (providers.data.openai) setProvider('openai');
@@ -54,7 +59,7 @@ export function ChatTab() {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages.data]);
+  }, [messages.data, streamText]);
 
   const send = useMutation({
     mutationFn: async () => {
@@ -77,6 +82,57 @@ export function ChatTab() {
     onError: (e: any) => toast.error(e?.response?.data?.detail || 'Chat failed'),
   });
 
+  async function sendStreaming() {
+    if (!draft.trim() || streamInflight) return;
+    const userText = draft;
+    setDraft('');
+    setStreamUserText(userText);
+    setStreamText('');
+    setStreamInflight(true);
+    const controller = new AbortController();
+    abortRef.current = controller;
+    try {
+      await streamSse(
+        '/ai/chat/stream',
+        {
+          conversation_id: selected,
+          provider,
+          messages: [{ role: 'user', content: userText }],
+          max_tokens: 1200,
+          temperature: 0.7,
+          feature: 'chat',
+        },
+        {
+          onToken: (t) => setStreamText((s) => s + t),
+          onUsage: (meta) => {
+            if (meta.conversation_id) setSelected(meta.conversation_id);
+          },
+          onError: (detail) => toast.error(detail),
+          onDone: () => {
+            qc.invalidateQueries({ queryKey: ['ai', 'conversations'] });
+            if (selected) {
+              qc.invalidateQueries({ queryKey: ['ai', 'conversation', selected] });
+            }
+          },
+          signal: controller.signal,
+        },
+      );
+    } catch (e: any) {
+      if (e?.name !== 'AbortError') toast.error(e?.message || 'Stream failed');
+    } finally {
+      setStreamInflight(false);
+      setStreamUserText('');
+      setStreamText('');
+      abortRef.current = null;
+    }
+  }
+
+  function cancelStream() {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    setStreamInflight(false);
+  }
+
   const remove = useMutation({
     mutationFn: async (id: string) => (await api.delete(`/ai/conversations/${id}`)).data,
     onSuccess: () => {
@@ -84,6 +140,14 @@ export function ChatTab() {
       qc.invalidateQueries({ queryKey: ['ai', 'conversations'] });
     },
   });
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape' && streamInflight) cancelStream();
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [streamInflight]);
 
   return (
     <div className="grid h-[calc(100vh-22rem)] min-h-[480px] gap-3 lg:grid-cols-[260px_1fr]">
@@ -124,6 +188,15 @@ export function ChatTab() {
             </span>
           </div>
           <div className="flex items-center gap-2">
+            <label className="inline-flex items-center gap-1.5 text-xs text-ink-muted" title="Stream tokens as they're generated">
+              <input
+                type="checkbox"
+                checked={streaming}
+                onChange={(e) => setStreaming(e.target.checked)}
+                className="h-3 w-3"
+              />
+              <Zap size={12} /> Stream
+            </label>
             <select className="ec-input !py-1 !w-32 text-xs" value={provider}
                     onChange={(e) => setProvider(e.target.value as any)}>
               <option value="anthropic" disabled={!providers.data?.anthropic}>Anthropic</option>
@@ -150,9 +223,26 @@ export function ChatTab() {
               <pre className="whitespace-pre-wrap font-sans">{m.content}</pre>
             </div>
           )) : (
-            <p className="grid h-full place-items-center text-sm text-ink-muted">
-              {selected ? 'Loading…' : 'Type below to start a new conversation.'}
-            </p>
+            !streamInflight && (
+              <p className="grid h-full place-items-center text-sm text-ink-muted">
+                {selected ? 'Loading…' : 'Type below to start a new conversation.'}
+              </p>
+            )
+          )}
+
+          {streamInflight && (
+            <>
+              {streamUserText && (
+                <div className="rounded-lg p-3 text-sm ml-12 bg-brand-50 dark:bg-brand-900/20">
+                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-ink-muted">user</p>
+                  <pre className="whitespace-pre-wrap font-sans">{streamUserText}</pre>
+                </div>
+              )}
+              <div className="rounded-lg p-3 text-sm mr-12 bg-surface-muted">
+                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-ink-muted">assistant · streaming</p>
+                <pre className="whitespace-pre-wrap font-sans">{streamText}<span className="ml-0.5 inline-block h-3 w-1.5 animate-pulse bg-brand-600 align-middle" /></pre>
+              </div>
+            </>
           )}
         </div>
 
@@ -165,16 +255,29 @@ export function ChatTab() {
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && draft.trim()) {
-                  send.mutate();
+                  if (streaming) sendStreaming(); else send.mutate();
                 }
               }}
             />
-            <button className="ec-btn-primary" disabled={!draft.trim() || send.isPending}
-                    onClick={() => send.mutate()}>
-              <Send size={14} /> {send.isPending ? '…' : 'Send'}
-            </button>
+            {streamInflight ? (
+              <button className="ec-btn-danger" onClick={cancelStream}>
+                Stop
+              </button>
+            ) : (
+              <button
+                className="ec-btn-primary"
+                disabled={!draft.trim() || send.isPending}
+                onClick={() => {
+                  if (streaming) sendStreaming(); else send.mutate();
+                }}
+              >
+                <Send size={14} /> {send.isPending ? '…' : 'Send'}
+              </button>
+            )}
           </div>
-          <p className="mt-1 text-xs text-ink-subtle">Ctrl/⌘+Enter to send · Anthropic/OpenAI require an API key in Settings.</p>
+          <p className="mt-1 text-xs text-ink-subtle">
+            Ctrl/⌘+Enter to send · Esc to stop · Anthropic/OpenAI require an API key in Settings.
+          </p>
         </div>
       </main>
     </div>

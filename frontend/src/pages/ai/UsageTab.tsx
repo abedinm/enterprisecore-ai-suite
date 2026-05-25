@@ -1,11 +1,11 @@
-import { useQuery } from '@tanstack/react-query';
+﻿import { useQuery } from '@tanstack/react-query';
 import {
   Bar, BarChart, CartesianGrid, Cell, Legend, Line, LineChart, Pie, PieChart,
   ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
 import { AlertCircle, TrendingUp, Zap } from 'lucide-react';
 import { api } from '../../lib/api';
-import { formatCurrency } from '../../lib/utils';
+import { formatCurrency, formatNumber } from '../../lib/utils';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -66,7 +66,7 @@ function LimitBar({ pct, limitUsd, spendUsd }: { pct: number; limitUsd: number; 
           Daily limit: {formatCurrency(spendUsd)} / {limitUsd > 0 ? formatCurrency(limitUsd) : 'No limit'}
         </span>
         <span className={danger ? 'text-red-500 font-semibold' : ''}>
-          {limitUsd > 0 ? `${(capped * 100).toFixed(1)} %` : '—'}
+          {limitUsd > 0 ? `${(capped * 100).toFixed(1)} %` : 'â€”'}
         </span>
       </div>
       {limitUsd > 0 && (
@@ -95,7 +95,7 @@ function MySpendSection() {
   if (isLoading || !data) {
     return (
       <div className="ec-card p-5">
-        <p className="text-sm text-ink-muted">Loading your spend data…</p>
+        <p className="text-sm text-ink-muted">Loading your spend dataâ€¦</p>
       </div>
     );
   }
@@ -124,9 +124,9 @@ function MySpendSection() {
       {/* KPI row */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Tile label="Today (24 h)" value={formatCurrency(dailySpend)} highlight />
-        <Tile label="Calls (24 h)" value={data.calls_24h.toLocaleString()} />
+        <Tile label="Calls (24 h)" value={formatNumber(data.calls_24h)} />
         <Tile label="Cost (30 d)" value={formatCurrency(parseFloat(data.cost_30d))} />
-        <Tile label="Calls (30 d)" value={data.calls_30d.toLocaleString()} />
+        <Tile label="Calls (30 d)" value={formatNumber(data.calls_30d)} />
       </div>
 
       {/* Daily limit progress bar */}
@@ -190,7 +190,7 @@ function AllUsersSection() {
     queryFn: async () => (await api.get<Summary>('/ai/usage/summary', { params: { days: 30 } })).data,
   });
 
-  if (isLoading || !data) return <p className="text-sm text-ink-muted">Loading platform usage…</p>;
+  if (isLoading || !data) return <p className="text-sm text-ink-muted">Loading platform usageâ€¦</p>;
 
   const byFeature = Object.entries(data.by_feature).map(([k, v]) => ({
     name: k, calls: v.calls, cost: parseFloat(v.cost_usd),
@@ -201,9 +201,9 @@ function AllUsersSection() {
     <div className="space-y-4">
       <p className="text-sm font-semibold text-ink-muted">Platform-wide (all users, last 30 d)</p>
       <div className="grid gap-3 md:grid-cols-4">
-        <Tile label="Total calls" value={data.total_calls.toLocaleString()} />
-        <Tile label="Tokens in" value={data.total_tokens_in.toLocaleString()} />
-        <Tile label="Tokens out" value={data.total_tokens_out.toLocaleString()} />
+        <Tile label="Total calls" value={formatNumber(data.total_calls)} />
+        <Tile label="Tokens in" value={formatNumber(data.total_tokens_in)} />
+        <Tile label="Tokens out" value={formatNumber(data.total_tokens_out)} />
         <Tile label="Total cost" value={formatCurrency(data.total_cost_usd)} highlight />
       </div>
 
@@ -251,8 +251,8 @@ function AllUsersSection() {
               <tr key={f.name}>
                 <td className="font-medium">{f.name}</td>
                 <td>{f.calls}</td>
-                <td>{data.by_feature[f.name].tokens_in.toLocaleString()}</td>
-                <td>{data.by_feature[f.name].tokens_out.toLocaleString()}</td>
+                <td>{formatNumber(data.by_feature[f.name].tokens_in)}</td>
+                <td>{formatNumber(data.by_feature[f.name].tokens_out)}</td>
                 <td>{formatCurrency(f.cost)}</td>
               </tr>
             )) : (
@@ -282,3 +282,4 @@ export function UsageTab() {
     </div>
   );
 }
+

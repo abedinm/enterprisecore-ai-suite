@@ -6,10 +6,12 @@ from decimal import Decimal
 from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, IdMixin, TimestampMixin
+from sqlalchemy import UniqueConstraint
+
+from app.db.base import Base, IdMixin, TenantMixin, TimestampMixin
 
 
-class Supplier(IdMixin, TimestampMixin, Base):
+class Supplier(IdMixin, TenantMixin, TimestampMixin, Base):
     name: Mapped[str] = mapped_column(String(180), index=True)
     email: Mapped[str | None] = mapped_column(String(255))
     phone: Mapped[str | None] = mapped_column(String(80))
@@ -23,7 +25,7 @@ class Supplier(IdMixin, TimestampMixin, Base):
     notes: Mapped[str] = mapped_column(Text, default="")
 
 
-class Warehouse(IdMixin, TimestampMixin, Base):
+class Warehouse(IdMixin, TenantMixin, TimestampMixin, Base):
     name: Mapped[str] = mapped_column(String(160), index=True)
     code: Mapped[str] = mapped_column(String(40), default="")
     address: Mapped[str | None] = mapped_column(Text)
@@ -33,7 +35,7 @@ class Warehouse(IdMixin, TimestampMixin, Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
-class WarehouseZone(IdMixin, TimestampMixin, Base):
+class WarehouseZone(IdMixin, TenantMixin, TimestampMixin, Base):
     warehouse_id: Mapped[str] = mapped_column(ForeignKey("warehouses.id", ondelete="CASCADE"), index=True)
     name: Mapped[str] = mapped_column(String(80))
     aisle: Mapped[str] = mapped_column(String(20), default="")
@@ -42,7 +44,7 @@ class WarehouseZone(IdMixin, TimestampMixin, Base):
     capacity: Mapped[int] = mapped_column(Integer, default=0)
 
 
-class ProductCategory(IdMixin, TimestampMixin, Base):
+class ProductCategory(IdMixin, TenantMixin, TimestampMixin, Base):
     __tablename__ = "product_categories"
 
     name: Mapped[str] = mapped_column(String(120), index=True)
@@ -50,8 +52,8 @@ class ProductCategory(IdMixin, TimestampMixin, Base):
     description: Mapped[str] = mapped_column(Text, default="")
 
 
-class Product(IdMixin, TimestampMixin, Base):
-    sku: Mapped[str] = mapped_column(String(80), unique=True, index=True)
+class Product(IdMixin, TenantMixin, TimestampMixin, Base):
+    sku: Mapped[str] = mapped_column(String(80), index=True)
     name: Mapped[str] = mapped_column(String(180), index=True)
     description: Mapped[str] = mapped_column(Text, default="")
     category_id: Mapped[str | None] = mapped_column(ForeignKey("product_categories.id", ondelete="SET NULL"))
@@ -66,9 +68,10 @@ class Product(IdMixin, TimestampMixin, Base):
     image_url: Mapped[str | None] = mapped_column(String(500))
     supplier_id: Mapped[str | None] = mapped_column(ForeignKey("suppliers.id", ondelete="SET NULL"))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    __table_args__ = (UniqueConstraint("tenant_id", "sku", name="uq_products_tenant_sku"),)
 
 
-class StockMovement(IdMixin, TimestampMixin, Base):
+class StockMovement(IdMixin, TenantMixin, TimestampMixin, Base):
     product_id: Mapped[str] = mapped_column(ForeignKey("products.id", ondelete="CASCADE"), index=True)
     warehouse_id: Mapped[str | None] = mapped_column(ForeignKey("warehouses.id", ondelete="SET NULL"))
     zone_id: Mapped[str | None] = mapped_column(ForeignKey("warehouse_zones.id", ondelete="SET NULL"))
@@ -78,17 +81,18 @@ class StockMovement(IdMixin, TimestampMixin, Base):
     notes: Mapped[str] = mapped_column(Text, default="")
 
 
-class PurchaseOrder(IdMixin, TimestampMixin, Base):
-    po_number: Mapped[str] = mapped_column(String(60), unique=True, index=True)
+class PurchaseOrder(IdMixin, TenantMixin, TimestampMixin, Base):
+    po_number: Mapped[str] = mapped_column(String(60), index=True)
     supplier_id: Mapped[str | None] = mapped_column(ForeignKey("suppliers.id", ondelete="SET NULL"))
     status: Mapped[str] = mapped_column(String(40), default="draft")
     order_date: Mapped[date] = mapped_column(Date)
     expected_date: Mapped[date | None] = mapped_column(Date)
     total: Mapped[Decimal] = mapped_column(Numeric(14, 2), default=0)
     notes: Mapped[str] = mapped_column(Text, default="")
+    __table_args__ = (UniqueConstraint("tenant_id", "po_number", name="uq_purchase_orders_tenant_number"),)
 
 
-class PurchaseOrderLine(IdMixin, TimestampMixin, Base):
+class PurchaseOrderLine(IdMixin, TenantMixin, TimestampMixin, Base):
     purchase_order_id: Mapped[str] = mapped_column(ForeignKey("purchase_orders.id", ondelete="CASCADE"))
     product_id: Mapped[str | None] = mapped_column(ForeignKey("products.id", ondelete="SET NULL"))
     description: Mapped[str] = mapped_column(String(255), default="")
@@ -97,7 +101,7 @@ class PurchaseOrderLine(IdMixin, TimestampMixin, Base):
     received_quantity: Mapped[int] = mapped_column(Integer, default=0)
 
 
-class Shipment(IdMixin, TimestampMixin, Base):
+class Shipment(IdMixin, TenantMixin, TimestampMixin, Base):
     tracking_number: Mapped[str] = mapped_column(String(120), index=True)
     carrier: Mapped[str | None] = mapped_column(String(120))
     status: Mapped[str] = mapped_column(String(40), default="pending")
@@ -111,7 +115,7 @@ class Shipment(IdMixin, TimestampMixin, Base):
     notes: Mapped[str] = mapped_column(Text, default="")
 
 
-class ShipmentEvent(IdMixin, TimestampMixin, Base):
+class ShipmentEvent(IdMixin, TenantMixin, TimestampMixin, Base):
     shipment_id: Mapped[str] = mapped_column(ForeignKey("shipments.id", ondelete="CASCADE"), index=True)
     timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     location: Mapped[str | None] = mapped_column(String(255))
@@ -119,7 +123,7 @@ class ShipmentEvent(IdMixin, TimestampMixin, Base):
     description: Mapped[str] = mapped_column(Text, default="")
 
 
-class ReturnRequest(IdMixin, TimestampMixin, Base):
+class ReturnRequest(IdMixin, TenantMixin, TimestampMixin, Base):
     rma_number: Mapped[str] = mapped_column(String(60), index=True, default="")
     product_id: Mapped[str | None] = mapped_column(ForeignKey("products.id", ondelete="SET NULL"))
     customer_id: Mapped[str | None] = mapped_column(String(64))
@@ -131,7 +135,7 @@ class ReturnRequest(IdMixin, TimestampMixin, Base):
     return_date: Mapped[date | None] = mapped_column(Date)
 
 
-class StockAlert(IdMixin, TimestampMixin, Base):
+class StockAlert(IdMixin, TenantMixin, TimestampMixin, Base):
     product_id: Mapped[str] = mapped_column(ForeignKey("products.id", ondelete="CASCADE"), index=True)
     alert_type: Mapped[str] = mapped_column(String(40), default="low_stock")
     threshold: Mapped[int] = mapped_column(Integer, default=0)

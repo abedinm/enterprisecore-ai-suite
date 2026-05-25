@@ -11,12 +11,19 @@ from sqlalchemy import inspect, select
 
 from app.core.config import settings
 from app.core.security import hash_password
+from app.core.tenant_context import bypass_tenant_filter, tenant_scope
 from app.db.base import Base
 from app.db.session import SessionLocal, engine
 from app.models import *  # noqa: F403
 from app.models.finance import CurrencyRate, ExpenseCategory, TaxRate
 from app.models.hr import OrgUnit
+from app.models.tenant import Tenant
 from app.models.user import Notification, Setting, User, UserRole
+
+# Slug of the default-tenant row created by migration 0013_multitenant. Every
+# pre-existing single-tenant row in the database belongs to this tenant after
+# the migration runs, and the default admin user is seeded inside it.
+DEFAULT_TENANT_SLUG = "default"
 
 BACKEND_ROOT = Path(__file__).resolve().parents[2]
 ALEMBIC_INI = BACKEND_ROOT / "alembic.ini"
@@ -53,6 +60,10 @@ def migrate_db() -> None:
     command.upgrade(cfg, "head")
     logger.info("Migrations applied; DB is at head")
 
+# MODULE_CATALOG drives the frontend nav. Each group may carry an optional
+# ``feature`` field (see app/core/plans.py); the modules endpoint filters out
+# groups whose feature isn't enabled by the active license plan. Groups
+# without a ``feature`` field are always-on platform modules.
 MODULE_CATALOG = [
     {"group": "Foundation", "items": ["Authentication", "Roles", "Settings", "Theme", "Offline sync", "Notifications", "Search", "Dashboard"]},
     {"group": "Finance", "items": ["Invoices", "Expenses", "Payroll", "Tax", "Budgets", "Profit & Loss", "Balance Sheet", "Cash Flow", "Forecasting", "Currencies", "Recurring Payments", "Vendor Payments", "Audit Trail", "Multi-Currency", "Reports Dashboard"]},
@@ -65,6 +76,10 @@ MODULE_CATALOG = [
     {"group": "Security", "items": ["Access Control", "Audit Logs", "Password Vault", "GDPR", "Backups", "Encryption", "Login Monitor", "Reports"]},
     {"group": "AI Coding", "items": ["Editor", "Explorer", "Terminal", "AI Chat", "Generation", "Explanation", "Bug Fixing", "Review", "Multi-file Editing", "Git", "Snippets", "API Tester", "DB Builder", "Regex Builder"]},
     {"group": "AI Brain", "items": ["Writer", "Meeting Summary", "Financial Narrator", "HR Insights", "Sales Forecasting", "Invoice Analyzer", "Contract Risk", "Smart Search", "Chatbot Builder", "Sentiment", "Ollama", "Usage"]},
+    {"group": "Web Chat", "feature": "webchat", "items": ["Bots", "Conversations", "Embed Snippet", "Test Sandbox", "Multilingual"]},
+    {"group": "Marketing", "feature": "marketing", "items": ["Pages", "Sections", "Portfolio", "Blog", "Business Profile", "Branding", "Templates", "Publish"]},
+    {"group": "Academic", "feature": "academic", "items": ["Attendance", "Timetable", "LMS Library", "Lab Reports", "Exam Scheduling", "Academic Advising", "Group Projects", "Study Aids", "Study Group Matching", "Student Finance", "Deadlines"]},
+    {"group": "Construction", "feature": "construction", "items": ["Dashboard", "Risks", "Schedule", "Milestones", "Progress", "Permits", "Site Instructions", "Variations", "Extension of Time", "Contracts", "RACI Matrix", "Insurances", "Toolbox Talks"]},
 ]
 
 # Offline reference rates against USD (snapshot Q1 2026). All can be edited in-app.
@@ -95,10 +110,44 @@ OFFLINE_CURRENCY_RATES: list[tuple[str, str, Decimal]] = [
 ]
 
 
+def _ensure_default_tenant(db) -> Tenant:
+    """Create the Default Tenant row if it isn't already present.
+
+    Called from ``init_db`` before any other seed step runs so the rest of
+    the bootstrap data has a tenant to attach to. The migration also
+    creates this row — calling here makes ``Base.metadata.create_all``-only
+    installs (tests, dev) work as well.
+    """
+    with bypass_tenant_filter():
+        existing = db.scalar(select(Tenant).where(Tenant.slug == DEFAULT_TENANT_SLUG))
+        if existing:
+            return existing
+        tenant = Tenant(
+            name="Default Tenant",
+            slug=DEFAULT_TENANT_SLUG,
+            plan="evaluation",
+            status="active",
+            settings={},
+            primary_contact_email="admin@local",
+            timezone="UTC",
+            currency=settings.default_currency,
+        )
+        db.add(tenant)
+        db.commit()
+        db.refresh(tenant)
+        return tenant
+
+
 def init_db() -> None:
     """Run migrations to head, then seed first-run data (admin, settings, etc.)."""
     migrate_db()
     with SessionLocal() as db:
+        tenant = _ensure_default_tenant(db)
+
+    # Bootstrap the rest of the default tenant's seed data inside its scope —
+    # the auto-filter scopes lookups to this tenant, and the before_insert
+    # hook autopopulates tenant_id on every new row.
+    with SessionLocal() as db, tenant_scope(tenant.id):
         admin = db.scalar(select(User).where(User.email == "admin@local"))
         if not admin:
             admin = User(
@@ -168,4 +217,41 @@ def init_db() -> None:
                 db.add(CurrencyRate(base_currency=base, quote_currency=quote,
                                     rate=rate, effective_date=today))
 
+        # Marketing Site Builder — ensure the singleton settings row exists.
+        # Local import keeps init_db's import graph small and avoids ordering
+        # issues when this module is imported during alembic env setup.
+        from app.services.marketing import seed_default_marketing_state
+        seed_default_marketing_state(db)
+
+        db.commit()
+
+    # Seed the permission catalog outside the tenant scope (permissions
+    # are global). Idempotent on re-run.
+    _seed_permission_catalog()
+
+    # Seed the gamification catalogue (achievements). Global, idempotent.
+    try:
+        from app.services.gamification import seed_catalogue
+        with SessionLocal() as db:
+            seed_catalogue(db)
+    except Exception as exc:  # pragma: no cover
+        from loguru import logger as _l
+        _l.warning("gamification: catalogue seed failed: {}", exc)
+
+
+def _seed_permission_catalog() -> None:
+    """Insert any missing rows from PERMISSION_CATALOG into ``permissions``.
+
+    Called from :func:`init_db` so tests that build the schema via
+    ``Base.metadata.create_all`` (no alembic migration run) still get the
+    catalog populated. Idempotent and side-effect-only.
+    """
+    from app.core.permissions import PERMISSION_CATALOG
+    from app.models.rbac import Permission
+
+    with SessionLocal() as db, bypass_tenant_filter():
+        existing = {row for (row,) in db.execute(select(Permission.key)).all()}
+        for key, cat, desc in PERMISSION_CATALOG:
+            if key not in existing:
+                db.add(Permission(key=key, category=cat, description=desc))
         db.commit()

@@ -1,0 +1,44 @@
+# Apply with: kubectl apply -k deploy/k8s/
+#
+# This is the no-Helm alternative. For a customized install, layer your own
+# kustomization on top:
+#
+#   bases:
+#     - ../../deploy/k8s
+#   namespace: my-ns
+#   images:
+#     - name: ghcr.io/enterprisecore/enterprisecore-backend
+#       newTag: 0.7.0
+#   patches:
+#     - path: my-ingress-patch.yaml
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: enterprisecore
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - pvc.yaml
+  - postgres.yaml
+  - deployment-backend.yaml
+  - deployment-frontend.yaml
+  - service.yaml
+  - hpa.yaml
+  - pdb.yaml
+  - ingress.yaml
+
+# NOTE: deploy/k8s/secret.example.yaml is intentionally NOT included here.
+# Create the secret out-of-band (kubectl create / sealed-secrets / external-
+# secrets) and place it in the enterprisecore namespace before applying.
+
+commonLabels:
+  app.kubernetes.io/name: enterprisecore
+  app.kubernetes.io/managed-by: kustomize
+
+images:
+  - name: ghcr.io/enterprisecore/enterprisecore-backend
+    newTag: "0.6.0"
+  - name: ghcr.io/enterprisecore/enterprisecore-frontend
+    newTag: "0.6.0"

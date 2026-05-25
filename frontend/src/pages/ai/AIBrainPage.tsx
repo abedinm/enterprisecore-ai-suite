@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import {
-  Brain, MessageSquare, PenLine, Heart, Search, BarChart3, FileText, Bot,
+  BarChart3, BookOpen, Bot, Brain, Cpu, Database, FileText, Heart,
+  MessageSquare, PenLine, Search,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { ChatTab } from './ChatTab';
@@ -10,16 +11,32 @@ import { SmartSearchTab } from './SmartSearchTab';
 import { UsageTab } from './UsageTab';
 import { MeetingTab } from './MeetingTab';
 import { ChatbotsTab } from './ChatbotsTab';
+import { KnowledgeTab } from './KnowledgeTab';
+import { RagChatTab } from './RagChatTab';
+import { ModelManagerTab } from './ModelManagerTab';
 
-type TabKey = 'chat' | 'writer' | 'sentiment' | 'search' | 'meeting' | 'chatbots' | 'usage';
+type TabKey =
+  | 'chat'
+  | 'rag'
+  | 'knowledge'
+  | 'writer'
+  | 'sentiment'
+  | 'search'
+  | 'meeting'
+  | 'chatbots'
+  | 'models'
+  | 'usage';
 
 const TABS: { key: TabKey; label: string; icon: typeof MessageSquare }[] = [
   { key: 'chat', label: 'Chat', icon: MessageSquare },
+  { key: 'rag', label: 'RAG Chat', icon: BookOpen },
+  { key: 'knowledge', label: 'Knowledge', icon: Database },
   { key: 'writer', label: 'Writer', icon: PenLine },
   { key: 'sentiment', label: 'Sentiment', icon: Heart },
   { key: 'search', label: 'Smart Search', icon: Search },
   { key: 'meeting', label: 'Meeting Summary', icon: FileText },
   { key: 'chatbots', label: 'Chatbots', icon: Bot },
+  { key: 'models', label: 'Models', icon: Cpu },
   { key: 'usage', label: 'Usage & Cost', icon: BarChart3 },
 ];
 
@@ -62,11 +79,14 @@ export function AIBrainPage() {
         </div>
         <div className="p-5">
           {active === 'chat' && <ChatTab />}
+          {active === 'rag' && <RagChatTab />}
+          {active === 'knowledge' && <KnowledgeTab />}
           {active === 'writer' && <WriterTab />}
           {active === 'sentiment' && <SentimentTab />}
           {active === 'search' && <SmartSearchTab />}
           {active === 'meeting' && <MeetingTab />}
           {active === 'chatbots' && <ChatbotsTab />}
+          {active === 'models' && <ModelManagerTab />}
           {active === 'usage' && <UsageTab />}
         </div>
       </div>

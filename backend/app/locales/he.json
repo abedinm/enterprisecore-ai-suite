@@ -1,0 +1,16 @@
+{
+  "errors.invalid_credentials": "דוא״ל או סיסמה שגויים",
+  "errors.not_authenticated": "לא מאומת",
+  "errors.user_inactive": "חשבון המשתמש אינו פעיל או אינו קיים",
+  "errors.permission_denied": "אין לך הרשאה לבצע פעולה זו",
+  "errors.not_found": "{entity} לא נמצא",
+  "errors.conflict_email": "כבר קיים משתמש עם דוא״ל זה",
+  "errors.mfa_required": "נדרש קוד MFA",
+  "errors.mfa_invalid": "קוד MFA שגוי",
+  "errors.feature_unavailable": "התכונה '{feature}' אינה כלולה בתוכנית הנוכחית.",
+  "errors.required_field": "{field} הוא שדה חובה",
+  "errors.invalid_locale": "שפה לא נתמכת '{locale}'",
+  "ok.saved": "נשמר",
+  "ok.deleted": "נמחק",
+  "errors.csrf_failed": "הסשן שלך צריך להתרענן — טען מחדש את הדף ונסה שוב."
+}

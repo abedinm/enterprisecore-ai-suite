@@ -1,0 +1,16 @@
+{
+  "errors.invalid_credentials": "Ungültige E-Mail oder Passwort",
+  "errors.not_authenticated": "Nicht authentifiziert",
+  "errors.user_inactive": "Benutzerkonto ist inaktiv oder existiert nicht",
+  "errors.permission_denied": "Sie haben keine Berechtigung für diese Aktion",
+  "errors.not_found": "{entity} nicht gefunden",
+  "errors.conflict_email": "Ein Benutzer mit dieser E-Mail existiert bereits",
+  "errors.mfa_required": "MFA-Code erforderlich",
+  "errors.mfa_invalid": "Ungültiger MFA-Code",
+  "errors.feature_unavailable": "Funktion '{feature}' ist im aktuellen Tarif nicht enthalten.",
+  "errors.required_field": "{field} ist erforderlich",
+  "errors.invalid_locale": "Nicht unterstützte Sprache '{locale}'",
+  "ok.saved": "Gespeichert",
+  "ok.deleted": "Gelöscht",
+  "errors.csrf_failed": "Deine Sitzung muss aktualisiert werden – lade die Seite neu und versuche es erneut."
+}

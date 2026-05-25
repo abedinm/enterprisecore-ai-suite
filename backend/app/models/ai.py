@@ -7,10 +7,10 @@ from decimal import Decimal
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, IdMixin, TimestampMixin
+from app.db.base import Base, IdMixin, TenantMixin, TimestampMixin
 
 
-class AiConversation(IdMixin, TimestampMixin, Base):
+class AiConversation(IdMixin, TenantMixin, TimestampMixin, Base):
     __tablename__ = "ai_conversations"
 
     user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
@@ -20,7 +20,7 @@ class AiConversation(IdMixin, TimestampMixin, Base):
     module: Mapped[str] = mapped_column(String(80), default="general", nullable=False)
 
 
-class AiMessage(IdMixin, TimestampMixin, Base):
+class AiMessage(IdMixin, TenantMixin, TimestampMixin, Base):
     __tablename__ = "ai_messages"
 
     conversation_id: Mapped[str] = mapped_column(ForeignKey("ai_conversations.id", ondelete="CASCADE"), index=True)
@@ -30,7 +30,7 @@ class AiMessage(IdMixin, TimestampMixin, Base):
     tokens_out: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
 
-class AiUsageRecord(IdMixin, TimestampMixin, Base):
+class AiUsageRecord(IdMixin, TenantMixin, TimestampMixin, Base):
     __tablename__ = "ai_usage_records"
 
     user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), index=True)
@@ -45,7 +45,7 @@ class AiUsageRecord(IdMixin, TimestampMixin, Base):
     occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True, nullable=False)
 
 
-class Chatbot(IdMixin, TimestampMixin, Base):
+class Chatbot(IdMixin, TenantMixin, TimestampMixin, Base):
     __tablename__ = "chatbots"
 
     owner_id: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), index=True)
@@ -60,7 +60,7 @@ class Chatbot(IdMixin, TimestampMixin, Base):
     public_token: Mapped[str | None] = mapped_column(String(64), unique=True)
 
 
-class ChatbotMessage(IdMixin, TimestampMixin, Base):
+class ChatbotMessage(IdMixin, TenantMixin, TimestampMixin, Base):
     __tablename__ = "chatbot_messages"
 
     chatbot_id: Mapped[str] = mapped_column(ForeignKey("chatbots.id", ondelete="CASCADE"), index=True)

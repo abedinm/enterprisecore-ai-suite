@@ -6,10 +6,10 @@ from decimal import Decimal
 from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, IdMixin, TimestampMixin
+from app.db.base import Base, IdMixin, TenantMixin, TimestampMixin
 
 
-class Project(IdMixin, TimestampMixin, Base):
+class Project(IdMixin, TenantMixin, TimestampMixin, Base):
     name: Mapped[str] = mapped_column(String(180), index=True)
     description: Mapped[str] = mapped_column(Text, default="")
     status: Mapped[str] = mapped_column(String(40), default="active", index=True)
@@ -20,7 +20,7 @@ class Project(IdMixin, TimestampMixin, Base):
     progress: Mapped[int] = mapped_column(Integer, default=0)
 
 
-class Task(IdMixin, TimestampMixin, Base):
+class Task(IdMixin, TenantMixin, TimestampMixin, Base):
     project_id: Mapped[str | None] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"), index=True)
     sprint_id: Mapped[str | None] = mapped_column(ForeignKey("sprints.id", ondelete="SET NULL"), index=True)
     assignee_id: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
@@ -37,7 +37,7 @@ class Task(IdMixin, TimestampMixin, Base):
     tags: Mapped[str] = mapped_column(String(255), default="")
 
 
-class Sprint(IdMixin, TimestampMixin, Base):
+class Sprint(IdMixin, TenantMixin, TimestampMixin, Base):
     project_id: Mapped[str] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"), index=True)
     name: Mapped[str] = mapped_column(String(160))
     start_date: Mapped[date] = mapped_column(Date)
@@ -47,7 +47,7 @@ class Sprint(IdMixin, TimestampMixin, Base):
     capacity_points: Mapped[int] = mapped_column(Integer, default=0)
 
 
-class Milestone(IdMixin, TimestampMixin, Base):
+class Milestone(IdMixin, TenantMixin, TimestampMixin, Base):
     project_id: Mapped[str] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"), index=True)
     title: Mapped[str] = mapped_column(String(180))
     description: Mapped[str] = mapped_column(Text, default="")
@@ -56,7 +56,7 @@ class Milestone(IdMixin, TimestampMixin, Base):
     progress: Mapped[int] = mapped_column(Integer, default=0)
 
 
-class TimeEntry(IdMixin, TimestampMixin, Base):
+class TimeEntry(IdMixin, TenantMixin, TimestampMixin, Base):
     __tablename__ = "time_entries"
 
     task_id: Mapped[str | None] = mapped_column(ForeignKey("tasks.id", ondelete="SET NULL"))
@@ -68,7 +68,7 @@ class TimeEntry(IdMixin, TimestampMixin, Base):
     is_billable: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
-class Meeting(IdMixin, TimestampMixin, Base):
+class Meeting(IdMixin, TenantMixin, TimestampMixin, Base):
     project_id: Mapped[str | None] = mapped_column(ForeignKey("projects.id", ondelete="SET NULL"))
     title: Mapped[str] = mapped_column(String(180))
     starts_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
@@ -80,7 +80,7 @@ class Meeting(IdMixin, TimestampMixin, Base):
     status: Mapped[str] = mapped_column(String(40), default="scheduled")
 
 
-class MeetingMinute(IdMixin, TimestampMixin, Base):
+class MeetingMinute(IdMixin, TenantMixin, TimestampMixin, Base):
     meeting_id: Mapped[str] = mapped_column(ForeignKey("meetings.id", ondelete="CASCADE"), index=True)
     author_id: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     body: Mapped[str] = mapped_column(Text, default="")
@@ -88,7 +88,7 @@ class MeetingMinute(IdMixin, TimestampMixin, Base):
     action_items: Mapped[str] = mapped_column(Text, default="")
 
 
-class Resource(IdMixin, TimestampMixin, Base):
+class Resource(IdMixin, TenantMixin, TimestampMixin, Base):
     name: Mapped[str] = mapped_column(String(180), index=True)
     role: Mapped[str] = mapped_column(String(80), default="")
     hourly_rate: Mapped[Decimal] = mapped_column(Numeric(10, 2), default=0)
@@ -97,7 +97,7 @@ class Resource(IdMixin, TimestampMixin, Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
-class ResourceAllocation(IdMixin, TimestampMixin, Base):
+class ResourceAllocation(IdMixin, TenantMixin, TimestampMixin, Base):
     resource_id: Mapped[str] = mapped_column(ForeignKey("resources.id", ondelete="CASCADE"), index=True)
     project_id: Mapped[str] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"), index=True)
     start_date: Mapped[date] = mapped_column(Date)
@@ -106,7 +106,7 @@ class ResourceAllocation(IdMixin, TimestampMixin, Base):
     notes: Mapped[str] = mapped_column(Text, default="")
 
 
-class TaskDependency(IdMixin, TimestampMixin, Base):
+class TaskDependency(IdMixin, TenantMixin, TimestampMixin, Base):
     __tablename__ = "task_dependencies"
 
     task_id: Mapped[str] = mapped_column(ForeignKey("tasks.id", ondelete="CASCADE"), index=True)

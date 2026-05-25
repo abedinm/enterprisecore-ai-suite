@@ -1,0 +1,91 @@
+{% extends "marketing/base.html" %}
+{% block content %}
+<div class="container">
+{% for section in sections if section.enabled %}
+  {% if section.type == 'hero' %}
+    <section class="section hero">
+      {% if section.eyebrow %}<div class="eyebrow">{{ section.eyebrow }}</div>{% endif %}
+      <h1>{{ section.title }}</h1>
+      {% if section.body %}<p>{{ section.body }}</p>{% endif %}
+      {% set primary = section.payload.get('primaryCta') if section.payload else None %}
+      {% set secondary = section.payload.get('secondaryCta') if section.payload else None %}
+      {% if primary or secondary %}
+        <p>
+          {% if primary %}<a class="btn" href="/site/{{ primary.get('route', '') }}">{{ primary.get('label', '') }}</a>{% endif %}
+          {% if secondary %}<a class="btn secondary" href="/site/{{ secondary.get('route', '') }}">{{ secondary.get('label', '') }}</a>{% endif %}
+        </p>
+      {% endif %}
+      {% set stats = section.payload.get('stats', []) if section.payload else [] %}
+      {% if stats %}
+        <div class="stats">
+          {% for stat in stats %}
+            <div class="stat"><div class="value">{{ stat.value }}</div><div class="label">{{ stat.label }}</div></div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </section>
+  {% elif section.type == 'services' %}
+    <section class="section">
+      {% if section.eyebrow %}<div class="eyebrow">{{ section.eyebrow }}</div>{% endif %}
+      {% if section.title %}<h2>{{ section.title }}</h2>{% endif %}
+      {% if section.body %}<p>{{ section.body }}</p>{% endif %}
+      <div class="grid grid-3">
+        {% for service in services %}
+          <div class="card">
+            <h3>{{ service.title }}</h3>
+            <p>{{ service.summary }}</p>
+            {% if service.price %}<p class="meta">{{ service.price }}</p>{% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+  {% elif section.type == 'projects' %}
+    <section class="section">
+      {% if section.eyebrow %}<div class="eyebrow">{{ section.eyebrow }}</div>{% endif %}
+      {% if section.title %}<h2>{{ section.title }}</h2>{% endif %}
+      {% if section.body %}<p>{{ section.body }}</p>{% endif %}
+      {% set limit = section.payload.get('showLimit', 4) if section.payload else 4 %}
+      <div class="grid grid-2">
+        {% for project in projects[:limit] %}
+          <div class="card project">
+            {% if project.image_id %}<img src="/site/uploads/{{ project.image_id }}" alt="{{ project.title }}">{% endif %}
+            <h3><a href="/site/portfolio/{{ project.slug }}">{{ project.title }}</a></h3>
+            {% if project.client %}<p class="meta">{{ project.client }}{% if project.category %} · {{ project.category }}{% endif %}</p>{% endif %}
+            <p>{{ project.summary }}</p>
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+  {% elif section.type == 'testimonials' %}
+    <section class="section">
+      {% if section.eyebrow %}<div class="eyebrow">{{ section.eyebrow }}</div>{% endif %}
+      {% if section.title %}<h2>{{ section.title }}</h2>{% endif %}
+      {% if section.body %}<p>{{ section.body }}</p>{% endif %}
+      <div class="grid grid-2">
+        {% for t in testimonials %}
+          <div class="card">
+            <p class="testimonial">&ldquo;{{ t.quote }}&rdquo;</p>
+            <p class="testimonial-author"><strong>{{ t.author }}</strong>{% if t.role %} — {{ t.role }}{% endif %}</p>
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+  {% elif section.type == 'about' %}
+    <section class="section">
+      {% if section.eyebrow %}<div class="eyebrow">{{ section.eyebrow }}</div>{% endif %}
+      {% if section.title %}<h2>{{ section.title }}</h2>{% endif %}
+      {% if section.body %}<p>{{ section.body }}</p>{% endif %}
+    </section>
+  {% elif section.type == 'cta' %}
+    <section class="section">
+      <div class="card" style="text-align: center;">
+        {% if section.title %}<h2>{{ section.title }}</h2>{% endif %}
+        {% if section.body %}<p>{{ section.body }}</p>{% endif %}
+        {% set btn = section.payload.get('button') if section.payload else None %}
+        {% if btn %}<p><a class="btn" href="/site/{{ btn.get('route', '') }}">{{ btn.get('label', '') }}</a></p>{% endif %}
+      </div>
+    </section>
+  {% endif %}
+{% endfor %}
+</div>
+{% endblock %}

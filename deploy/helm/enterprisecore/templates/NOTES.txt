@@ -1,0 +1,41 @@
+EnterpriseCore AI Suite has been installed as release "{{ .Release.Name }}" in namespace "{{ .Release.Namespace }}".
+
+{{- if .Values.ingress.enabled }}
+
+Application URL:
+  https://{{ .Values.ingress.host }}
+
+DNS: make sure {{ .Values.ingress.host }} resolves to your ingress controller's external IP.
+
+{{- if not .Values.ingress.tls.enabled }}
+WARNING: TLS is not enabled on the ingress. Set ingress.tls.enabled=true and configure cert-manager before going to production.
+{{- end }}
+{{- else }}
+
+Ingress disabled. To reach the app, port-forward the frontend service:
+
+  kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "enterprisecore.frontend.fullname" . }} 8080:{{ .Values.service.frontend.port }}
+
+Then open http://localhost:8080
+{{- end }}
+
+{{- if and (eq (.Values.secrets.secretKey | default "") "") (not .Values.secrets.existingSecret) }}
+
+NOTE: SECRET_KEY and ENCRYPTION_KEY were auto-generated and stored in:
+  Secret/{{ include "enterprisecore.secretName" . }}
+These survive helm upgrades. To rotate them, set new values via --set or delete the secret and re-deploy (will invalidate existing sessions).
+{{- end }}
+
+{{- if .Values.postgres.enabled }}
+
+Bundled Postgres is running as StatefulSet/{{ include "enterprisecore.postgres.fullname" . }}.
+For production load, point externalDatabase.dsn at a managed Postgres (RDS, Cloud SQL, Azure DB) instead.
+{{- end }}
+
+Run a connectivity test:
+
+  helm test {{ .Release.Name }} -n {{ .Release.Namespace }}
+
+Tail backend logs:
+
+  kubectl logs -n {{ .Release.Namespace }} -l app.kubernetes.io/component=backend -f --tail=200

@@ -1,0 +1,67 @@
+{{- if .Values.ollama.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "enterprisecore.ollama.fullname" . }}
+  labels:
+    {{- include "enterprisecore.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ollama
+spec:
+  ports:
+    - port: 11434
+      targetPort: ollama
+      name: ollama
+  selector:
+    {{- include "enterprisecore.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: ollama
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "enterprisecore.ollama.fullname" . }}
+  labels:
+    {{- include "enterprisecore.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ollama
+spec:
+  serviceName: {{ include "enterprisecore.ollama.fullname" . }}
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "enterprisecore.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: ollama
+  template:
+    metadata:
+      labels:
+        {{- include "enterprisecore.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: ollama
+    spec:
+      containers:
+        - name: ollama
+          image: "{{ .Values.ollama.image.repository }}:{{ .Values.ollama.image.tag }}"
+          ports:
+            - containerPort: 11434
+              name: ollama
+          resources:
+            {{- $base := .Values.ollama.resources -}}
+            {{- if .Values.ollama.gpu -}}
+            {{- $gpu := dict "limits" (dict "nvidia.com/gpu" 1) -}}
+            {{- $merged := merge (deepCopy $base) $gpu -}}
+            {{- toYaml $merged | nindent 12 }}
+            {{- else -}}
+            {{- toYaml $base | nindent 12 }}
+            {{- end }}
+          volumeMounts:
+            - name: models
+              mountPath: /root/.ollama
+  volumeClaimTemplates:
+    - metadata:
+        name: models
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: {{ .Values.ollama.storage }}
+        {{- if .Values.ollama.storageClass }}
+        storageClassName: {{ .Values.ollama.storageClass | quote }}
+        {{- end }}
+{{- end }}

@@ -1,0 +1,16 @@
+{
+  "errors.invalid_credentials": "邮箱或密码无效",
+  "errors.not_authenticated": "未通过身份验证",
+  "errors.user_inactive": "用户账户已停用或不存在",
+  "errors.permission_denied": "您没有执行此操作的权限",
+  "errors.not_found": "未找到 {entity}",
+  "errors.conflict_email": "此邮箱的用户已存在",
+  "errors.mfa_required": "需要 MFA 验证码",
+  "errors.mfa_invalid": "MFA 验证码无效",
+  "errors.feature_unavailable": "当前套餐不包含功能 '{feature}'。",
+  "errors.required_field": "{field} 为必填项",
+  "errors.invalid_locale": "不支持的语言 '{locale}'",
+  "ok.saved": "已保存",
+  "ok.deleted": "已删除",
+  "errors.csrf_failed": "您的会话需要刷新——请重新加载页面后再试。"
+}

@@ -1,16 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, Search, X } from 'lucide-react';
-import { api, type SearchHit, type SearchResponse } from '../../lib/api';
+import { api, type FtsSearchResponse, type FtsSearchResult } from '../../lib/api';
+import { moduleLabel, resultHref } from '../../lib/search';
 import { cn } from '../../lib/utils';
 
 type GlobalSearchProps = {
   onSubmit?: () => void;
 };
 
+// Cmd-K / Ctrl-K popover. Calls the FTS5-backed GET /search and routes
+// the user straight to the matching record via the entity_type → route
+// mapping in lib/search.ts.
 export function GlobalSearch({ onSubmit }: GlobalSearchProps) {
   const [query, setQuery] = useState('');
-  const [items, setItems] = useState<SearchHit[]>([]);
+  const [items, setItems] = useState<FtsSearchResult[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -47,8 +51,10 @@ export function GlobalSearch({ onSubmit }: GlobalSearchProps) {
     setLoading(true);
     const handle = setTimeout(async () => {
       try {
-        const { data } = await api.post<SearchResponse>('/search', { query: query.trim(), limit: 8 });
-        setItems(data.items);
+        const { data } = await api.get<FtsSearchResponse>('/search', {
+          params: { q: query.trim(), limit: 8 },
+        });
+        setItems(data.results);
         setActiveIndex(0);
       } catch {
         setItems([]);
@@ -59,11 +65,11 @@ export function GlobalSearch({ onSubmit }: GlobalSearchProps) {
     return () => clearTimeout(handle);
   }, [query]);
 
-  function navigateTo(hit: SearchHit) {
+  function navigateTo(hit: FtsSearchResult) {
     setOpen(false);
     setQuery('');
     setItems([]);
-    navigate(`/${hit.module}`);
+    navigate(resultHref(hit));
   }
 
   function onKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
@@ -141,7 +147,7 @@ export function GlobalSearch({ onSubmit }: GlobalSearchProps) {
           ) : (
             items.map((hit, idx) => (
               <button
-                key={`${hit.module}-${hit.id}`}
+                key={`${hit.entity_type}-${hit.entity_id}`}
                 onClick={() => navigateTo(hit)}
                 onMouseEnter={() => setActiveIndex(idx)}
                 className={cn(
@@ -150,11 +156,16 @@ export function GlobalSearch({ onSubmit }: GlobalSearchProps) {
                 )}
               >
                 <div className="flex w-full items-center justify-between gap-2">
-                  <span className="truncate font-medium">{hit.title}</span>
-                  <span className="ec-badge-blue uppercase tracking-wide text-[10px]">{hit.module}</span>
+                  <span className="truncate font-medium">{hit.title || '(untitled)'}</span>
+                  <span className="ec-badge-blue uppercase tracking-wide text-[10px]">
+                    {moduleLabel(hit.entity_type)}
+                  </span>
                 </div>
-                {hit.body ? (
-                  <span className="line-clamp-1 text-xs text-ink-muted">{hit.body}</span>
+                {hit.subtitle ? (
+                  <span className="line-clamp-1 text-xs text-ink-subtle">{hit.subtitle}</span>
+                ) : null}
+                {hit.body_excerpt ? (
+                  <span className="line-clamp-1 text-xs text-ink-muted">{hit.body_excerpt}</span>
                 ) : null}
               </button>
             ))
