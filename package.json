@@ -19,6 +19,6 @@
     "build:exe": "npm run build && cd electron && npm run dist"
   },
   "devDependencies": {
-    "concurrently": "^9.1.0"
+    "concurrently": "^10.0.3"
   }
 }
