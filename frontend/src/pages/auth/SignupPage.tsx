@@ -83,6 +83,11 @@ export function SignupPage() {
         if (detail.toLowerCase().includes('slug')) setErrors({ slug: detail });
         else if (detail.toLowerCase().includes('email')) setErrors({ admin_email: detail });
         else toast.error(detail);
+      } else if (err?.request && !err?.response) {
+        // Request was sent but no response — server down / CORS / offline.
+        // Don't mask this as a generic signup failure; tell the truth so the
+        // user checks the server instead of re-entering correct details.
+        toast.error('Can’t reach the server. Check that the backend is running and try again.');
       } else {
         toast.error('Could not complete signup. Please try again.');
       }
@@ -128,7 +133,7 @@ export function SignupPage() {
                   autoFocus
                   data-testid="signup-name"
                 />
-                {errors.name ? <p className="mt-1 text-xs text-rose-600">{errors.name}</p> : null}
+                {errors.name ? <p role="alert" aria-live="assertive" className="mt-1 text-xs text-rose-600">{errors.name}</p> : null}
               </div>
               <div>
                 <label className="ec-label" htmlFor="org-slug">Workspace URL slug</label>
@@ -150,7 +155,7 @@ export function SignupPage() {
                   />
                 </div>
                 <p className="mt-1 text-[11px] text-ink-subtle">Lowercase letters, numbers, and dashes.</p>
-                {errors.slug ? <p className="mt-1 text-xs text-rose-600">{errors.slug}</p> : null}
+                {errors.slug ? <p role="alert" aria-live="assertive" className="mt-1 text-xs text-rose-600">{errors.slug}</p> : null}
               </div>
               <div>
                 <label className="ec-label" htmlFor="contact-email">Primary contact email (optional)</label>
@@ -163,7 +168,7 @@ export function SignupPage() {
                   data-testid="signup-contact-email"
                 />
                 {errors.primary_contact_email ? (
-                  <p className="mt-1 text-xs text-rose-600">{errors.primary_contact_email}</p>
+                  <p role="alert" aria-live="assertive" className="mt-1 text-xs text-rose-600">{errors.primary_contact_email}</p>
                 ) : null}
               </div>
               <button className="ec-btn-primary w-full" type="submit" data-testid="signup-next">
@@ -183,7 +188,7 @@ export function SignupPage() {
                   data-testid="signup-admin-name"
                 />
                 {errors.admin_full_name ? (
-                  <p className="mt-1 text-xs text-rose-600">{errors.admin_full_name}</p>
+                  <p role="alert" aria-live="assertive" className="mt-1 text-xs text-rose-600">{errors.admin_full_name}</p>
                 ) : null}
               </div>
               <div>
@@ -199,7 +204,7 @@ export function SignupPage() {
                   data-testid="signup-admin-email"
                 />
                 {errors.admin_email ? (
-                  <p className="mt-1 text-xs text-rose-600">{errors.admin_email}</p>
+                  <p role="alert" aria-live="assertive" className="mt-1 text-xs text-rose-600">{errors.admin_email}</p>
                 ) : null}
               </div>
               <div>
@@ -227,7 +232,7 @@ export function SignupPage() {
                   <span className="text-[11px] text-ink-subtle">{strength.label}</span>
                 </div>
                 {errors.admin_password ? (
-                  <p className="mt-1 text-xs text-rose-600">{errors.admin_password}</p>
+                  <p role="alert" aria-live="assertive" className="mt-1 text-xs text-rose-600">{errors.admin_password}</p>
                 ) : null}
               </div>
               <label className="flex items-start gap-2 text-xs text-ink-muted">
