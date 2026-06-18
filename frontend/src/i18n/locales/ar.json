@@ -53,7 +53,8 @@
     "emailMeALink": "أرسل لي رابطًا",
     "sending": "جارٍ الإرسال…",
     "signingIn": "جارٍ تسجيل الدخول…",
-    "dontHaveAccount": "ليس لديك حساب؟"
+    "dontHaveAccount": "ليس لديك حساب؟",
+    "serverUnreachable": "تعذّر الوصول إلى الخادم. تأكّد من تشغيل الخادم وأعد المحاولة."
   },
   "common": {
     "search": "بحث…",

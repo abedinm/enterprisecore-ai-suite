@@ -53,7 +53,8 @@
     "emailMeALink": "リンクを送信",
     "sending": "送信中…",
     "signingIn": "サインイン中…",
-    "dontHaveAccount": "アカウントをお持ちではありませんか？"
+    "dontHaveAccount": "アカウントをお持ちではありませんか？",
+    "serverUnreachable": "サーバーに接続できません。バックエンドが起動しているか確認して再試行してください。"
   },
   "common": {
     "search": "検索…",

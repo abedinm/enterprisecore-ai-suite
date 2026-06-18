@@ -53,7 +53,8 @@
     "emailMeALink": "向我发送链接",
     "sending": "发送中…",
     "signingIn": "登录中…",
-    "dontHaveAccount": "还没有账户？"
+    "dontHaveAccount": "还没有账户？",
+    "serverUnreachable": "无法连接到服务器。请检查后端是否运行并重试。"
   },
   "common": {
     "search": "搜索…",

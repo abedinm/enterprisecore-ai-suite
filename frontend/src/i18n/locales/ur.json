@@ -53,7 +53,8 @@
     "emailMeALink": "مجھے لنک بھیجیں",
     "sending": "بھیجا جا رہا ہے…",
     "signingIn": "سائن ان ہو رہا ہے…",
-    "dontHaveAccount": "اکاؤنٹ نہیں ہے؟"
+    "dontHaveAccount": "اکاؤنٹ نہیں ہے؟",
+    "serverUnreachable": "سرور تک رسائی نہیں۔ تصدیق کریں کہ بیک اینڈ چل رہا ہے اور دوبارہ کوشش کریں۔"
   },
   "common": {
     "search": "تلاش…",

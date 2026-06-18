@@ -53,7 +53,8 @@
     "emailMeALink": "Inviami un link",
     "sending": "Invio…",
     "signingIn": "Accesso…",
-    "dontHaveAccount": "Non hai un account?"
+    "dontHaveAccount": "Non hai un account?",
+    "serverUnreachable": "Impossibile raggiungere il server. Verifica che il backend sia in esecuzione e riprova."
   },
   "common": {
     "search": "Cerca…",

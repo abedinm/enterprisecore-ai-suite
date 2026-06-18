@@ -35,8 +35,20 @@ export function LoginPage() {
       await login(email, password);
       navigate(redirect, { replace: true });
     } catch (err: any) {
-      const detail = err?.response?.data?.detail;
-      setError(detail || t('auth.loginError'));
+      // Distinguish a genuine auth rejection from a transport failure.
+      // Showing "Invalid email or password" when the real problem is that
+      // the server is unreachable is a trust killer (flagged in the audit):
+      // the user retypes correct credentials and keeps failing.
+      if (err?.response) {
+        // The server answered — use its message (e.g. 401 invalid creds,
+        // 429 rate-limited, 422 validation).
+        setError(err.response.data?.detail || t('auth.loginError'));
+      } else if (err?.request) {
+        // Request was sent but no response — server down, CORS, or offline.
+        setError(t('auth.serverUnreachable'));
+      } else {
+        setError(t('auth.loginError'));
+      }
     } finally {
       setSubmitting(false);
     }

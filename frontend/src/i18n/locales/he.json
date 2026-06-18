@@ -53,7 +53,8 @@
     "emailMeALink": "שלח לי קישור",
     "sending": "שולח…",
     "signingIn": "מתחבר…",
-    "dontHaveAccount": "אין לך חשבון?"
+    "dontHaveAccount": "אין לך חשבון?",
+    "serverUnreachable": "לא ניתן להגיע לשרת. ודא שהשרת פועל ונסה שוב."
   },
   "common": {
     "search": "חיפוש…",
