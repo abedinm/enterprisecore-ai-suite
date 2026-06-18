@@ -5,9 +5,17 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Annotated, Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.schemas.common import ORMModel
+from app.schemas.validators import (
+    non_negative_money,
+    positive_quantity,
+    tax_rate_fraction,
+    validate_currency,
+    validate_email_opt,
+    validate_phone_opt,
+)
 
 
 # ---- Customers / Vendors -------------------------------------------------
@@ -15,8 +23,19 @@ class CustomerIn(BaseModel):
     name: str = Field(min_length=1, max_length=180)
     email: str | None = None
     phone: str | None = None
-    billing_address: str | None = None
+    billing_address: str | None = Field(default=None, max_length=2000)
     currency: str = "USD"
+
+    _v_email = field_validator("email")(staticmethod(validate_email_opt))
+    _v_phone = field_validator("phone")(staticmethod(validate_phone_opt))
+    _v_ccy = field_validator("currency")(staticmethod(validate_currency))
+
+    @field_validator("name")
+    @classmethod
+    def _name_not_blank(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("Customer name can't be empty.")
+        return v.strip()
 
 
 class CustomerOut(ORMModel):
@@ -32,7 +51,17 @@ class VendorIn(BaseModel):
     name: str = Field(min_length=1, max_length=180)
     email: str | None = None
     phone: str | None = None
-    payment_terms: str | None = None
+    payment_terms: str | None = Field(default=None, max_length=120)
+
+    _v_email = field_validator("email")(staticmethod(validate_email_opt))
+    _v_phone = field_validator("phone")(staticmethod(validate_phone_opt))
+
+    @field_validator("name")
+    @classmethod
+    def _name_not_blank(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("Vendor name can't be empty.")
+        return v.strip()
 
 
 class VendorOut(ORMModel):
@@ -50,6 +79,19 @@ class InvoiceLineIn(BaseModel):
     unit_price: Decimal = Decimal("0")
     tax_rate: Decimal = Decimal("0")  # e.g. 0.20 for 20%
 
+    @field_validator("description")
+    @classmethod
+    def _desc_not_blank(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("Line description can't be empty.")
+        return v.strip()
+
+    _v_qty = field_validator("quantity")(staticmethod(positive_quantity))
+    _v_price = field_validator("unit_price")(
+        staticmethod(lambda v: non_negative_money(v, "unit price"))
+    )
+    _v_tax = field_validator("tax_rate")(staticmethod(tax_rate_fraction))
+
 
 class InvoiceLineOut(ORMModel):
     id: str
@@ -62,13 +104,24 @@ class InvoiceLineOut(ORMModel):
 
 class InvoiceIn(BaseModel):
     customer_id: str | None = None
-    invoice_number: str | None = None  # auto-generated when missing
+    invoice_number: str | None = Field(default=None, max_length=60)
     issue_date: date
     due_date: date
     currency: str = "USD"
-    notes: str | None = None
+    notes: str | None = Field(default=None, max_length=4000)
     discount_total: Decimal = Decimal("0")
-    lines: list[InvoiceLineIn] = []
+    lines: list[InvoiceLineIn] = Field(default_factory=list, max_length=200)
+
+    _v_ccy = field_validator("currency")(staticmethod(validate_currency))
+    _v_disc = field_validator("discount_total")(
+        staticmethod(lambda v: non_negative_money(v, "discount"))
+    )
+
+    @model_validator(mode="after")
+    def _dates_in_order(self):
+        if self.due_date < self.issue_date:
+            raise ValueError("Due date can't be earlier than the issue date.")
+        return self
 
 
 class InvoiceOut(ORMModel):
@@ -88,8 +141,21 @@ class InvoiceOut(ORMModel):
     created_at: datetime
 
 
+_INVOICE_STATUSES = {"draft", "sent", "paid", "overdue", "void"}
+
+
 class InvoiceStatusUpdate(BaseModel):
     status: str  # draft|sent|paid|overdue|void
+
+    @field_validator("status")
+    @classmethod
+    def _valid_status(cls, v: str) -> str:
+        s = (v or "").strip().lower()
+        if s not in _INVOICE_STATUSES:
+            raise ValueError(
+                f"Invalid status '{v}'. Must be one of: {', '.join(sorted(_INVOICE_STATUSES))}."
+            )
+        return s
 
 
 # ---- Expenses ------------------------------------------------------------

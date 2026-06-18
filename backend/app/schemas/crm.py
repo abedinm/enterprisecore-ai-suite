@@ -4,17 +4,35 @@ from __future__ import annotations
 from datetime import date, datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from app.schemas.common import ORMModel
+from app.schemas.validators import (
+    non_negative_money,
+    validate_email_opt,
+    validate_phone_opt,
+)
+
+_DEAL_STAGES = {"qualified", "discovery", "proposal", "negotiation", "won", "lost"}
+_LEAD_STATUSES = {"new", "contacted", "qualified", "unqualified", "converted"}
 
 
 class ContactIn(BaseModel):
     name: str = Field(min_length=1, max_length=180)
-    company: str | None = None
+    company: str | None = Field(default=None, max_length=180)
     email: str | None = None
     phone: str | None = None
     tags: str = "[]"
+
+    _v_email = field_validator("email")(staticmethod(validate_email_opt))
+    _v_phone = field_validator("phone")(staticmethod(validate_phone_opt))
+
+    @field_validator("name")
+    @classmethod
+    def _name_not_blank(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("Contact name can't be empty.")
+        return v.strip()
 
 
 class ContactOut(ORMModel):
@@ -28,10 +46,18 @@ class ContactOut(ORMModel):
 
 class LeadIn(BaseModel):
     contact_id: str | None = None
-    source: str | None = None
+    source: str | None = Field(default=None, max_length=120)
     status: str = "new"
-    score: int = 0
-    notes: str = ""
+    score: int = Field(default=0, ge=0, le=100)
+    notes: str = Field(default="", max_length=4000)
+
+    @field_validator("status")
+    @classmethod
+    def _valid_status(cls, v: str) -> str:
+        s = (v or "new").strip().lower()
+        if s not in _LEAD_STATUSES:
+            raise ValueError(f"Invalid lead status. Must be one of: {', '.join(sorted(_LEAD_STATUSES))}.")
+        return s
 
 
 class LeadOut(ORMModel):
@@ -45,11 +71,36 @@ class LeadOut(ORMModel):
 
 class DealIn(BaseModel):
     contact_id: str | None = None
-    title: str
+    title: str = Field(min_length=1, max_length=180)
     stage: str = "qualified"
     value: Decimal = Decimal("0")
     probability: Decimal = Decimal("0")
     expected_close_date: date | None = None
+
+    @field_validator("title")
+    @classmethod
+    def _title_not_blank(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("Deal title can't be empty.")
+        return v.strip()
+
+    @field_validator("stage")
+    @classmethod
+    def _valid_stage(cls, v: str) -> str:
+        s = (v or "qualified").strip().lower()
+        if s not in _DEAL_STAGES:
+            raise ValueError(f"Invalid deal stage. Must be one of: {', '.join(sorted(_DEAL_STAGES))}.")
+        return s
+
+    _v_value = field_validator("value")(staticmethod(lambda v: non_negative_money(v, "deal value")))
+
+    @field_validator("probability")
+    @classmethod
+    def _valid_prob(cls, v: Decimal) -> Decimal:
+        d = Decimal(str(v))
+        if d < 0 or d > 100:
+            raise ValueError("Probability must be between 0 and 100.")
+        return d
 
 
 class DealOut(ORMModel):
@@ -64,6 +115,14 @@ class DealOut(ORMModel):
 
 class DealStageUpdate(BaseModel):
     stage: str
+
+    @field_validator("stage")
+    @classmethod
+    def _valid_stage(cls, v: str) -> str:
+        s = (v or "").strip().lower()
+        if s not in _DEAL_STAGES:
+            raise ValueError(f"Invalid deal stage. Must be one of: {', '.join(sorted(_DEAL_STAGES))}.")
+        return s
 
 
 class FollowUpIn(BaseModel):

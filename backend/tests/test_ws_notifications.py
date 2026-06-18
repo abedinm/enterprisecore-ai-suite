@@ -9,13 +9,20 @@ from app.services.realtime import manager
 
 
 @pytest.fixture(autouse=True)
-def _wipe_subscribers_between_tests():
+def _wipe_subscribers_between_tests(client: TestClient):
     reset_subscribers()
     # Force the realtime manager to re-wire on next connect so we don't
     # accumulate event-bus subscribers across tests.
     manager._event_bus_wired = False  # noqa: SLF001
+    # CRITICAL: the session-scoped TestClient shares a cookie jar. Since the
+    # login endpoint now sets an httpOnly ``access_token`` cookie and the WS
+    # auth falls back to that cookie, a leftover login cookie from an earlier
+    # test would silently authenticate the "no token" connection and break
+    # the rejection test. Clear the jar so each WS test controls its own auth.
+    client.cookies.clear()
     yield
     reset_subscribers()
+    client.cookies.clear()
 
 
 def test_ws_notifications_rejects_without_token(client: TestClient):

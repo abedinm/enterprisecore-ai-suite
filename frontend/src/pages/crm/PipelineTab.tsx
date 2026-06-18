@@ -1,8 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Plus, Edit3, Trash2, X, Workflow, TrendingUp } from 'lucide-react';
+import { Plus, Edit3, Trash2, X, Workflow, TrendingUp, FileText } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { api } from '../../lib/api';
 import { formatCurrency, formatDate } from '../../lib/utils';
+import { popConfetti } from '../../lib/celebrate';
 import type { Contact } from './CustomersTab';
 
 type Deal = {
@@ -51,6 +53,24 @@ export function PipelineTab() {
   const remove = useMutation({
     mutationFn: async (id: string) => (await api.delete(`/crm/deals/${id}`)).data,
     onSuccess: () => qc.invalidateQueries({ queryKey: ['crm', 'pipeline'] }),
+  });
+  const makeInvoice = useMutation({
+    mutationFn: async (id: string) =>
+      (await api.post<{ invoice_number: string; created: boolean; message: string }>(
+        `/crm/deals/${id}/invoice`,
+      )).data,
+    onSuccess: (data) => {
+      if (data.created) {
+        popConfetti();
+        toast.success(`Draft invoice ${data.invoice_number} created from this deal`);
+      } else {
+        toast(data.message, { icon: 'ℹ️' });
+      }
+      qc.invalidateQueries({ queryKey: ['finance', 'invoices'] });
+    },
+    onError: (err: { response?: { data?: { detail?: string } } }) => {
+      toast.error(err?.response?.data?.detail ?? 'Could not create invoice');
+    },
   });
 
   async function loadFullDeal(id: string) {
@@ -127,6 +147,16 @@ export function PipelineTab() {
                           <Trash2 size={11} />
                         </button>
                       </div>
+                      {stage === 'won' && (
+                        <button
+                          className="ec-btn-ghost mt-1 w-full justify-center !py-1 !text-[11px] text-brand-600"
+                          title="Generate a draft Finance invoice from this won deal"
+                          disabled={makeInvoice.isPending}
+                          onClick={() => makeInvoice.mutate(d.id)}
+                        >
+                          <FileText size={11} /> {makeInvoice.isPending ? 'Creating…' : 'Create invoice'}
+                        </button>
+                      )}
                     </div>
                   );
                 }) : <p className="py-4 text-center text-[10px] text-ink-muted">No deals</p>}
@@ -168,7 +198,7 @@ function DealForm({ contacts, editing, onSaved, onCancel }: { contacts: Contact[
     <div className="rounded-xl border border-border bg-surface-muted p-4">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-lg font-semibold">{editing ? 'Edit deal' : 'New deal'}</h3>
-        <button className="ec-btn-ghost" onClick={onCancel}><X size={16} /></button>
+        <button aria-label="Close" className="ec-btn-ghost" onClick={onCancel}><X size={16} aria-hidden="true" /></button>
       </div>
       <div className="grid gap-3 md:grid-cols-4">
         <div className="md:col-span-2"><label className="ec-label">Title</label><input className="ec-input" value={title} onChange={(e) => setTitle(e.target.value)} /></div>

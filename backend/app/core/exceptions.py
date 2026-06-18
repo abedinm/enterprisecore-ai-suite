@@ -56,9 +56,22 @@ def register_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(RequestValidationError)
     async def _validation_error(_: Request, exc: RequestValidationError):
+        # Pydantic v2 puts the original exception object in each error's
+        # ``ctx`` (e.g. ``ctx={'error': ValueError(...)}``). That object is
+        # not JSON-serialisable, so dumping ``exc.errors()`` verbatim raises a
+        # TypeError that escalates to a 500. We sanitise each error into a
+        # plain dict and surface the *first* friendly message as ``detail`` so
+        # the UI can show it directly.
+        safe_errors = []
+        for err in exc.errors():
+            field = ".".join(str(p) for p in err.get("loc", []) if p != "body")
+            msg = str(err.get("msg", "")).removeprefix("Value error, ")
+            safe_errors.append({"field": field or "request", "message": msg,
+                                "type": err.get("type")})
+        detail = safe_errors[0]["message"] if safe_errors else "Validation failed"
         return JSONResponse(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            content={"detail": "Validation failed", "code": "validation_error", "errors": exc.errors()},
+            content={"detail": detail, "code": "validation_error", "errors": safe_errors},
         )
 
     @app.exception_handler(IntegrityError)

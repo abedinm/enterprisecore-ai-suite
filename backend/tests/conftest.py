@@ -261,6 +261,22 @@ def _reset_rate_limiter():
     yield
 
 
+@pytest.fixture()
+def reset_response_cache():
+    """Opt-in cache reset for tests that exercise ``@cache_response`` endpoints
+    with different licence plans (e.g. ``/api/v1/modules``,
+    ``/api/v1/license/features``).
+
+    These endpoints memoise per-namespace for 300 s, so the first plan's body
+    is otherwise served to later tests that monkeypatch a different plan.
+    This fixture is **opt-in** (not autouse) — a global cache reset perturbed
+    unrelated tests, so only the licence-filtering tests request it."""
+    from app.core import cache as _cache
+    _cache.reset()
+    yield
+    _cache.reset()
+
+
 @pytest.fixture(autouse=True)
 def _set_default_tenant_scope(session_factory):
     """Auto-scope every test's foreground operations to the default tenant.

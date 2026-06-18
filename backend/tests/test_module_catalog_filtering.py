@@ -15,7 +15,7 @@ def _set_plan(monkeypatch, plan: str | None, state: str = "active"):
 
 
 def test_modules_evaluation_includes_webchat_and_marketing_not_academic(
-    client, auth_headers, monkeypatch
+    client, auth_headers, monkeypatch, reset_response_cache
 ):
     _set_plan(monkeypatch, plan=None, state="evaluation")
     r = client.get("/api/v1/modules", headers=auth_headers)
@@ -29,7 +29,7 @@ def test_modules_evaluation_includes_webchat_and_marketing_not_academic(
     assert "CRM" in groups
 
 
-def test_modules_edu_includes_academic(client, auth_headers, monkeypatch):
+def test_modules_edu_includes_academic(client, auth_headers, monkeypatch, reset_response_cache):
     _set_plan(monkeypatch, plan="edu")
     r = client.get("/api/v1/modules", headers=auth_headers)
     assert r.status_code == 200
@@ -38,7 +38,7 @@ def test_modules_edu_includes_academic(client, auth_headers, monkeypatch):
     assert "Web Chat" in groups
 
 
-def test_modules_core_excludes_academic(client, auth_headers, monkeypatch):
+def test_modules_core_excludes_academic(client, auth_headers, monkeypatch, reset_response_cache):
     _set_plan(monkeypatch, plan="core")
     r = client.get("/api/v1/modules", headers=auth_headers)
     assert r.status_code == 200
@@ -49,7 +49,7 @@ def test_modules_core_excludes_academic(client, auth_headers, monkeypatch):
 
 
 def test_license_features_endpoint_returns_plan_and_features(
-    client, auth_headers, monkeypatch
+    client, auth_headers, monkeypatch, reset_response_cache
 ):
     _set_plan(monkeypatch, plan="edu")
     r = client.get("/api/v1/license/features", headers=auth_headers)

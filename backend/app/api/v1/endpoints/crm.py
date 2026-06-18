@@ -9,7 +9,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, require_roles
-from app.core.exceptions import NotFoundError
+from app.core.exceptions import AppError, NotFoundError
 from app.db.session import get_db
 from app.models.crm import (
     CommunicationEntry, Contact, Contract, CustomerSegment, Deal, EmailCampaign,
@@ -229,6 +229,61 @@ def update_deal_stage(did: str, payload: DealStageUpdate, db: Session = Depends(
             user_id=user.id,
         )
     return deal
+
+
+@router.post("/deals/{did}/invoice", response_model=dict)
+def convert_deal_to_invoice(
+    did: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_roles(UserRole.admin, UserRole.manager)),
+):
+    """Generate a draft Finance invoice from a deal — the CRM↔Finance bridge.
+
+    Finds-or-creates a Customer from the deal's contact, then posts a draft
+    invoice for the deal value. Idempotent: a second call returns the
+    invoice already generated for this deal rather than duplicating it.
+
+    Requires Admin or Manager — invoicing is a finance-write action.
+    """
+    from app.services.crm_finance_bridge import (
+        DealConversionError,
+        convert_deal_to_invoice as _convert,
+    )
+
+    deal = db.get(Deal, did)
+    if not deal:
+        raise NotFoundError("Deal not found")
+    try:
+        invoice, created = _convert(db, deal)
+    except DealConversionError as exc:
+        raise AppError(str(exc), code="deal_not_invoiceable", status_code=422) from exc
+
+    _audit(db, user, "deal_to_invoice", "deal", deal.id,
+           {"invoice_id": invoice.id, "invoice_number": invoice.invoice_number,
+            "created": created})
+    db.commit()
+    db.refresh(invoice)
+    if created:
+        publish_event(
+            "finance.invoice.created",
+            payload={"invoice_id": invoice.id, "number": invoice.invoice_number,
+                     "source": "crm_deal", "deal_id": deal.id},
+            user_id=user.id,
+        )
+    return {
+        "invoice_id": invoice.id,
+        "invoice_number": invoice.invoice_number,
+        "customer_id": invoice.customer_id,
+        "total": str(invoice.total),
+        "currency": invoice.currency,
+        "status": invoice.status,
+        "created": created,
+        "message": (
+            f"Draft invoice {invoice.invoice_number} created."
+            if created else
+            f"Invoice {invoice.invoice_number} already exists for this deal."
+        ),
+    }
 
 
 @router.delete("/deals/{did}", status_code=204)
