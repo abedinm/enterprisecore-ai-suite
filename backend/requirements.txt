@@ -59,7 +59,7 @@ opentelemetry-exporter-otlp-proto-http>=1.27,<2.0
 # OPTIONAL at runtime — if REDIS_URL is unset the queue falls back to
 # sync execution in-process and these imports are never reached.
 rq>=1.16,<2.0
-redis>=5.0,<6.0
+redis>=7.4.0,<8.0
 # --- Identity / SSO (Phase 7) -------------------------------------------
 # Authlib drives the OIDC flow (discovery, JWKS, token exchange,
 # ID-token verification).
